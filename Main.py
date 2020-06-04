@@ -21,11 +21,11 @@ assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Darias local standard paths (NEEDED)
-CT_SCANS_PATH = "/home/daria/Desktop/PycharmProjects/DATA/CT-Scans"
-GT_SEG_PATH = "/home/daria/Desktop/PycharmProjects/DATA/GT-SEG"
-GT_BB_PATH = "/home/daria/Desktop/PycharmProjects/DATA/GT-BB"
-BB_PATH = "/home/daria/Desktop/PycharmProjects/DATA/BB"
-SAVE_PATH = "/home/daria/Desktop/PycharmProjects/DATA/RESULTS/"
+CT_SCANS_PATH = "/Data/Daria/DATA/CT-Scans"
+GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG"
+GT_BB_PATH = "/Data/Daria/DATA/GT-BB"
+BB_PATH = "/Data/Daria/DATA/BB"
+SAVE_PATH = "/Data/Daria/DATA/RESULTS/"
 
 # create missing folders
 save_path_cropped_scans = "{}Cropped-CT-Scans/".format(SAVE_PATH)
@@ -34,13 +34,14 @@ save_path_X_train = "{}X train/".format(SAVE_PATH)
 save_path_y_train = "{}y train/".format(SAVE_PATH)
 save_path_X_test = "{}X test/".format(SAVE_PATH)
 save_path_y_test = "{}y test/".format(SAVE_PATH)
+save_path_results = "{}Result-SEG/".format(SAVE_PATH)
 Path(save_path_cropped_scans).mkdir(parents=True, exist_ok=True)
 Path(save_path_cropped_seg).mkdir(parents=True, exist_ok=True)
 Path(save_path_X_train).mkdir(parents=True, exist_ok=True)
 Path(save_path_y_train).mkdir(parents=True, exist_ok=True)
 Path(save_path_X_test).mkdir(parents=True, exist_ok=True)
 Path(save_path_y_test).mkdir(parents=True, exist_ok=True)
-
+Path(save_path_results).mkdir(parents=True, exist_ok=True)
 
 '''_____________________________________________________________________________________________'''
 '''|.................................PREPROCESS DATA...........................................|'''
@@ -86,8 +87,8 @@ y_train = get_training_data(save_path_y_train, number_of_patients, "y")
 '''|.................................PREPARE TEST DATA.........................................|'''
 '''_____________________________________________________________________________________________'''
 
-X_test = get_training_data(save_path_X_test, 1)
-y_test = get_training_data(save_path_y_test, 1, "y")
+X_test = get_training_data(save_path_X_test, number_of_patients)
+y_test = get_training_data(save_path_y_test, number_of_patients, "y")
 
 '''_____________________________________________________________________________________________'''
 '''|...................................APPLY U-NET.............................................|'''
@@ -97,18 +98,27 @@ y_test = get_training_data(save_path_y_test, 1, "y")
 model = load_model("{}U-Net.h5".format(SAVE_PATH))
 
 # apply U-Net on test data
-result = model.predict(X_test, verbose=1)
-result_img_arr = result[0] # get first result
-
-# check voxel values against treshold and get segmentationmask
+results = model.predict(X_test, verbose=1)
+print(len(results))
 threshold = 0.3
-pred_map = get_segmentation_mask(result_img_arr, "liver", threshold)
+for i in range(0, len(results)):
+    print(i)
+    result = results[i]
+    # check voxel values against treshold and get segmentationmask
+    pred_map = get_segmentation_mask(result, "liver", threshold)
 
-import nibabel as nib
-# save cropped array as nifti file with patient number in name
-daria = nib.load("{}20.nii.gz".format(save_path_X_test))
-new_img = nib.Nifti1Image(pred_map, daria.affine, daria.header)
-nib.save(new_img, '{}{}'.format(SAVE_PATH, "20NIBresult.nii.gz"))
+    import nibabel as nib
+
+    # save cropped array as nifti file with patient number in name
+    daria = nib.load("{}{}.nii.gz".format(save_path_X_test, i))
+    new_img = nib.Nifti1Image(pred_map, daria.affine, daria.header)
+    nib.save(new_img, '{}seg{}.nii.gz'.format(save_path_results, i))
+
+
+#result_img_arr = results[0] # get first result
+
+
+
 
 # Generate generalization metrics
 generate_metrics(model, X_test, y_test)
