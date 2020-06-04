@@ -96,7 +96,6 @@ def get_segmentation_mask(result_img_arr, organ, thresh):
 
 # load all .nii files in a folder into a list that is sorted by ascending patient numbers
 # assuming files contain patient numbers anywhere in the filename
-# Beginning from 0. Without skipping a number*
 def get_dict_of_files(path):
     dict_of_files = {}
 
@@ -114,7 +113,6 @@ def get_dict_of_files(path):
 # load all paths to all .vtk files in a folder into a list that is sorted by ascending patient numbers
 # but only use the .vtk files of a given organ
 # assuming files contain patient numbers anywhere in the filename
-# Beginning from 0. Without skipping a number*
 # assuming files contain organ numbers followed by "_bb" anywhere in the filename
 def get_dict_of_paths(path, organ=None):
     if organ is not None:
@@ -154,6 +152,7 @@ def check_if_all_files_are_complete(scan_files, gt_seg_files, box_paths):
 def crop_out_bbs(dict_files, dict_box_paths, save_path, organ=None):
     # loop through all patients
     number_of_patients = len(dict_files)
+    #TODO: nicht von 0 bis länge sondern für jeden key im dictionary
     for i in range(0, number_of_patients):
         print(i)
         # access relevant patient files
