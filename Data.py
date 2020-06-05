@@ -155,7 +155,7 @@ def check_if_all_files_are_complete(scan_files, gt_seg_files, box_paths):
     #  check for error
     if not (len1 == len2 == len3):
         raise ValueError('Every Patient needs a Scan, BBs for all organs and segmentations. '
-                         'One of theses is missing')
+                         'One of theses is missing. Scans: {}, BBs: {}, seg: {}'.format(len1, len3, len2))
     else:
         return len1
 
@@ -163,26 +163,26 @@ def check_if_all_files_are_complete(scan_files, gt_seg_files, box_paths):
 # crops out the areas of interest defined by the given bounding boxes
 # (where to organ is supposed to be)
 def crop_out_bbs(dict_files, dict_box_paths, save_path, organ=None):
-    print("cropping out bounding boxes (area of interest)")
-
+    print("delete and recreate '{}'".format(save_path))
     # delete and recreate folder with results
     shutil.rmtree(save_path, ignore_errors=True)
     Path(save_path).mkdir(parents=True, exist_ok=True)
 
     # loop through all patients
-    number_of_patients = len(dict_files)
+    #number_of_patients = len(dict_files)
 
+    print("cropping out bounding boxes (area of interest)")
     #TODO: nicht von 0 bis länge sondern für jeden key im dictionary
-    counter = 0
-    for i in range(0, number_of_patients):
-        # show feedback to user via print
-        counter = counter + 1;
-        if counter%10 == 0:
-            print(".")
-
+    index = 0  # keep extra index in case patients skip a number
+    for key in sorted(dict_files.keys()):
         # access relevant patient files
-        img = dict_files[i]
-        box_path = dict_box_paths[i]
+        img = dict_files[key]
+        box_path = dict_box_paths[key]
+
+        # show feedback to user via print
+        index = index +1
+        if index%10 == 0:
+            print(".", end='')
 
         # crop out box area
         array_cropped_img = crop_out_bb(img, box_path)
@@ -196,26 +196,25 @@ def crop_out_bbs(dict_files, dict_box_paths, save_path, organ=None):
 
         # save cropped array as nifti file with patient number in name
         new_img = nib.Nifti1Image(array_cropped_img, img.affine, img.header)
-        nib.save(new_img, '{}{}.nii.gz'.format(save_path, "{}".format(i)))
+        nib.save(new_img, '{}{}.nii.gz'.format(save_path, "{}".format(key)))
 
     print("done. saved cropped files to '{}'".format(save_path))
 
 
 # resamples all files in a folder to a given size and saves it to the given path
 def resample_files(path, save_path, x, y, z):
-    print("resampling files in '{}'".format(path))
-
     # delete and recreate folder with results
     print("delete and recreate {}".format(save_path))
     shutil.rmtree(save_path, ignore_errors=True)
     Path(save_path).mkdir(parents=True, exist_ok=True)
 
+    print("resampling files in '{}'".format(path))
     counter = 0
     for file in os.scandir(path):
         # show feedback to user via print
         counter = counter + 1;
         if counter%10 == 0:
-            print(".")
+            print(".", end='')
 
         sitk_img = sitk.ReadImage(file.path)
         resampled = resample_file(sitk_img, x, y, z)
