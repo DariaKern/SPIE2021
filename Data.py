@@ -8,6 +8,7 @@ import shutil
 import numpy as np
 import nibabel as nib
 import SimpleITK as sitk  # https://simpleitk.readthedocs.io/en/master/index.html
+from pathlib import Path
 from helpers import get_organ_label, get_bb_coordinates, \
     nifti_image_affine_reader, bb_mm_to_vox
 
@@ -63,7 +64,8 @@ def resample_file(sitk_img, target_img_x, target_img_y, target_img_z):
     # define and apply  resampling filter
     resampler = sitk.ResampleImageFilter()  # create filter object
     resampler.SetReferenceImage(sitk_img)
-    resampler.SetOutputOrigin([0, 0, 0])  # start of coordinate system of new image
+    #INFO: if output image origin is set, resampling segmentations begging from patient 33 doesn't work
+    #resampler.SetOutputOrigin([0, 0, 0])  # start of coordinate system of new image
     resampler.SetOutputSpacing(nSpac)  # spacing (voxel size) of new image
     resampler.SetInterpolator(sitk.sitkNearestNeighbor)
     resampler.SetSize((target_img_x, target_img_y, target_img_z))  # size of new image
@@ -161,11 +163,23 @@ def check_if_all_files_are_complete(scan_files, gt_seg_files, box_paths):
 # crops out the areas of interest defined by the given bounding boxes
 # (where to organ is supposed to be)
 def crop_out_bbs(dict_files, dict_box_paths, save_path, organ=None):
+    print("cropping out bounding boxes (area of interest)")
+
+    # delete and recreate folder with results
+    shutil.rmtree(save_path, ignore_errors=True)
+    Path(save_path).mkdir(parents=True, exist_ok=True)
+
     # loop through all patients
     number_of_patients = len(dict_files)
 
     #TODO: nicht von 0 bis länge sondern für jeden key im dictionary
+    counter = 0
     for i in range(0, number_of_patients):
+        # show feedback to user via print
+        counter = counter + 1;
+        if counter%10 == 0:
+            print(".")
+
         # access relevant patient files
         img = dict_files[i]
         box_path = dict_box_paths[i]
@@ -184,13 +198,30 @@ def crop_out_bbs(dict_files, dict_box_paths, save_path, organ=None):
         new_img = nib.Nifti1Image(array_cropped_img, img.affine, img.header)
         nib.save(new_img, '{}{}.nii.gz'.format(save_path, "{}".format(i)))
 
+    print("done. saved cropped files to '{}'".format(save_path))
+
 
 # resamples all files in a folder to a given size and saves it to the given path
 def resample_files(path, save_path, x, y, z):
+    print("resampling files in '{}'".format(path))
+
+    # delete and recreate folder with results
+    print("delete and recreate {}".format(save_path))
+    shutil.rmtree(save_path, ignore_errors=True)
+    Path(save_path).mkdir(parents=True, exist_ok=True)
+
+    counter = 0
     for file in os.scandir(path):
+        # show feedback to user via print
+        counter = counter + 1;
+        if counter%10 == 0:
+            print(".")
+
         sitk_img = sitk.ReadImage(file.path)
         resampled = resample_file(sitk_img, x, y, z)
         sitk.WriteImage(resampled, "{}{}".format(save_path, file.name))
+
+    print("done. saved resampled files to '{}'".format(save_path))
 
 
 def get_training_data(path, y_or_X="X"):
@@ -217,19 +248,28 @@ def get_training_data(path, y_or_X="X"):
     return data
 
 
-def get_segmentation_masks(results, path, save_path, organ, threshold):
-    seg_masks = []
-    for i in range(0, len(results)):
+def get_segmentation_masks(results, path_original_files, save_path, organ, threshold):
+    # delete and recreate folder with results
+    shutil.rmtree(save_path, ignore_errors=True)
+    Path(save_path).mkdir(parents=True, exist_ok=True)
 
+    # read test files in patient order and write them into data
+    dict_original_files_paths = get_dict_of_paths(path_original_files)
+
+    seg_masks = []
+    print("get segmentation masks")
+    for i in range(0, len(results)):
         result = results[i]
+        curr_key = sorted(dict_original_files_paths.keys())[i]
+        curr_file_path = dict_original_files_paths[curr_key]
 
         # check voxel values against treshold and get segmentationmask
         pred_map = get_segmentation_mask(result, organ, threshold)
 
         # save cropped array as nifti file with patient number in name
-        input_file = nib.load("{}{}.nii.gz".format(path, i))    # reference file
+        input_file = nib.load(curr_file_path)    # reference file
         new_img = nib.Nifti1Image(pred_map, input_file.affine, input_file.header)
-        nib.save(new_img, '{}seg{}.nii.gz'.format(save_path, i))
+        nib.save(new_img, '{}seg{}.nii.gz'.format(save_path, curr_key))
 
     #TODO:
     return seg_masks

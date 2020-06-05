@@ -37,9 +37,15 @@ SAVE_PATH = "/Data/Daria/DATA/RESULTS/"
 ORGAN = "liver"
 
 # define train-test split (NEEDED)
-# 0.00 (0%) - 1.00 (100%)
-PERCENTAGE_TEST_SPLIT = 0.50
+# 0.00 (0%) - 1.00 (100%) percentage of test files among All files
+PERCENTAGE_TEST_SPLIT = 0.1
 
+# define validation split  (Default = 0.1)
+# 0.00 (0%) - 1.00 (100%) percentage of validation files among Test files
+
+# define batch size (Default = 15)
+
+# define number of epochs (Default = 50)
 
 '''_____________________________________________________________________________________________'''
 '''|........................................GPU & PATHS........................................|'''
@@ -72,10 +78,10 @@ Path(save_path_results).mkdir(parents=True, exist_ok=True)
 '''_____________________________________________________________________________________________'''
 
 # load data
-#dict_scan_files = get_dict_of_files(CT_SCANS_PATH)  # load all ct scans
-#dict_gt_seg_files = get_dict_of_files(GT_SEG_PATH)  # load all gt segmentations
-#dict_organ_gt_box_paths = get_dict_of_paths(GT_BB_PATH, ORGAN)  # load all paths to gt bbs of organ
-#number_of_patients = check_if_all_files_are_complete(dict_scan_files, dict_gt_seg_files, dict_organ_gt_box_paths)
+dict_scan_files = get_dict_of_files(CT_SCANS_PATH)  # load all ct scans
+dict_gt_seg_files = get_dict_of_files(GT_SEG_PATH)  # load all gt segmentations
+dict_organ_gt_box_paths = get_dict_of_paths(GT_BB_PATH, ORGAN)  # load all paths to gt bbs of organ
+number_of_patients = check_if_all_files_are_complete(dict_scan_files, dict_gt_seg_files, dict_organ_gt_box_paths)
 
 
 '''_____________________________________________________________________________________________'''
@@ -83,23 +89,20 @@ Path(save_path_results).mkdir(parents=True, exist_ok=True)
 '''_____________________________________________________________________________________________'''
 
 # crop out area of interest where the organ is
-#crop_out_bbs(dict_scan_files, dict_organ_gt_box_paths, save_path_cropped_scans)
-#crop_out_bbs(dict_gt_seg_files, dict_organ_gt_box_paths, save_path_cropped_seg, ORGAN)
+crop_out_bbs(dict_scan_files, dict_organ_gt_box_paths, save_path_cropped_scans)
+crop_out_bbs(dict_gt_seg_files, dict_organ_gt_box_paths, save_path_cropped_seg, ORGAN)
 
 # resample files to make them fit into the U-Net (64x64x64)
-#resample_files(save_path_cropped_scans, save_path_X_train, 64, 64, 64)
-#resample_files(save_path_cropped_seg, save_path_y_train, 64, 64, 64)
+resample_files(save_path_cropped_scans, save_path_X_train, 64, 64, 64)
+resample_files(save_path_cropped_seg, save_path_y_train, 64, 64, 64)
 
 
 '''_____________________________________________________________________________________________'''
 '''|...............................PREPARE TRAINING & TEST DATA................................|'''
 '''_____________________________________________________________________________________________'''
 
-
 split_train_test(save_path_X_train, save_path_X_test, PERCENTAGE_TEST_SPLIT)
-split_train_test(save_path_y_train, save_path_y_train, PERCENTAGE_TEST_SPLIT)
-
-exit()
+split_train_test(save_path_y_train, save_path_y_test, PERCENTAGE_TEST_SPLIT)
 
 X_train = get_training_data(save_path_X_train)
 y_train = get_training_data(save_path_y_train, "y")
@@ -113,11 +116,11 @@ y_test = get_training_data(save_path_y_test, "y")
 '''_____________________________________________________________________________________________'''
 
 # generate the U-Net model
-#architecture = generate_U_Net(64, 64, 64, 1)
+architecture = generate_U_Net(64, 64, 64, 1)
 
 # train U-Net on training data and save it
-#model, history = train_U_Net(architecture, X_train, y_train, SAVE_PATH)
-#plot_history(history)
+model, history = train_U_Net(architecture, X_train, y_train, SAVE_PATH)
+plot_history(history)
 
 
 '''_____________________________________________________________________________________________'''
@@ -139,7 +142,6 @@ generate_metrics(model, X_test, y_test)
 
 #TODO:
 # bei UNET.py train wird momentan traniert wie bei Mietzner im Code
-# beim Plotten ist vall_acc immer 1. Wieso?
 # bei UNet model save wirklich notwendig da Model Checkpointer glaub schon das beste speichert?
 
 '''
