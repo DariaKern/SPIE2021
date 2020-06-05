@@ -4,6 +4,7 @@
 
 import os
 import re
+import shutil
 import numpy as np
 import nibabel as nib
 import SimpleITK as sitk  # https://simpleitk.readthedocs.io/en/master/index.html
@@ -192,15 +193,17 @@ def resample_files(path, save_path, x, y, z):
         sitk.WriteImage(resampled, "{}{}".format(save_path, file.name))
 
 
-def get_training_data(path, number_of_files, y_or_X="X"):
+def get_training_data(path, y_or_X="X"):
+    # read files in patient order and write them into data
+    dict_data = get_dict_of_paths(path)
+
+    number_of_files = len(dict_data)
+
     # differentiate between training data/Scans (X_train) and labels/Segmentations (y_train)
     if y_or_X == "X":
         data = np.zeros((number_of_files, 64, 64, 64, 1), dtype=np.uint8)  # define X_train array
     else:
         data = np.zeros((number_of_files, 64, 64, 64, 1), dtype=np.bool)  # define y_train array
-
-    # read files in patient order and write them into data
-    dict_data = get_dict_of_paths(path)
 
     index = 0  # keep extra index in case patients skip a number
     for key in sorted(dict_data.keys()):
@@ -230,4 +233,32 @@ def get_segmentation_masks(results, path, save_path, organ, threshold):
 
     #TODO:
     return seg_masks
+
+
+def split_train_test(path_train, path_test, split):
+    # move all files that may be in test to train
+    for file in os.scandir(path_test):
+        shutil.move(file.path, "{}{}".format(path_train, file.name))
+
+    # check how many files are in train folder
+    dict_train_file_paths = get_dict_of_paths(path_train)
+    counter = len(dict_train_file_paths)
+
+    # split into train and test
+    test = int(counter * split)
+    train = int(counter - test)
+    print("splitting {} files into {} TRAIN and {} TEST files".format(counter, train, test))
+
+    # sort files in train in descending order
+    # and move x amount of test data to test folder
+    test_count = 0
+    for key in sorted(dict_train_file_paths.keys(), reverse=True):
+        if test_count == test:
+            break
+        original_path = dict_train_file_paths[key]
+        original_file_name = os.path.basename(original_path)
+        shutil.move(original_path, "{}{}".format(path_test, original_file_name))
+        test_count = test_count + 1
+
+
 
