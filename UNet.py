@@ -92,7 +92,6 @@ def generate_U_Net(IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH, IMG_CHANNELS):
 
 
 def train_U_Net(model, X_train, y_train, save_path):
-
     # set parameters for training and train the model
     earlystopper = EarlyStopping(patience=10, verbose=1)
     checkpointer = ModelCheckpoint('{}unet_.h5'.format(save_path), verbose=1, save_best_only=True)
@@ -104,13 +103,12 @@ def train_U_Net(model, X_train, y_train, save_path):
 
     # save U-Net
     model.save('{}U-Net.h5'.format(save_path))
-    print(history)
+
     return model, history
 
 
 def plot_history(history):
     # Plot history as image: Binary crossentropy & Accuracy
-    print("")
     plt.plot(history.history['loss'], label='binary crossentropy (training data)')
     plt.plot(history.history['val_loss'], label='binary crossentropy (validation data)')
     plt.plot(history.history['accuracy'], label='Accuracy (training data)')

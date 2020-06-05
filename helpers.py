@@ -2,7 +2,6 @@
 HELPING METHODS
 """
 
-
 '''_____________________________________________________________________________________________'''
 '''|.................................Helping Methods...........................................|'''
 '''_____________________________________________________________________________________________'''
@@ -10,7 +9,6 @@ HELPING METHODS
 
 # given the name of an organ it returns the organs label number
 def get_organ_label(organ):
-
     # define dictionary (to simulate switch-case)
     switcher = {
         "liver": 170,
@@ -35,7 +33,6 @@ def get_organ_label(organ):
 # TODO: when creating VTK files bb Coordinates switch y and y2
 # read bounding box coordinates
 def get_bb_coordinates(box_path):
-
     # open vtk file and get coordinates
     bb_file = open(box_path, 'r')
     lines = bb_file.readlines()
@@ -64,7 +61,6 @@ def get_bb_coordinates(box_path):
 # transform coordinate list (x,y,z) from mm-space to voxelspace
 # return new coordinate list
 def mm_to_vox(coord_list, spacing, offset):
-
     # calculate coordinates from mm-space to voxelspace
     x_vox = (coord_list[0] - offset[0]) / spacing[0]
     y_vox = (coord_list[1] - offset[1]) / spacing[1]
@@ -76,7 +72,6 @@ def mm_to_vox(coord_list, spacing, offset):
 
 # transform overlap of bounding box and image/segmentation to vox coordinates
 def bb_mm_to_vox(bb_coords, spacing, offset):
-
     # split coordinates into min and max coordinate values of bounding box
     bb_coords_min_mm = [bb_coords[0], bb_coords[2], bb_coords[4]]  # x1, y1, z1
     bb_coords_max_mm = [bb_coords[1], bb_coords[3], bb_coords[5]]  # x2, y2, z2
@@ -119,7 +114,6 @@ def bb_mm_to_vox(bb_coords, spacing, offset):
 # for coordinate system handling
 # return spacing and offset
 def nifti_image_affine_reader(img):
-
     # read spacing
     spacing_x = img.affine[0][0]
     spacing_y = img.affine[1][1]

@@ -73,15 +73,18 @@ def resample_file(sitk_img, target_img_x, target_img_y, target_img_z):
 
 # check voxel values against threshold and get segmentationmask
 def get_segmentation_mask(result_img_arr, organ, thresh):
-
+    # get respective label for the given organ
     organ_label = get_organ_label(organ)
 
-    pred_map = np.zeros((64,64,64))
+    # create empty (only zeros) segmentation mask with same siza as result_img_arr
+    pred_map = np.zeros((result_img_arr.shape[2],
+                         result_img_arr.shape[1],
+                         result_img_arr.shape[0]))
 
-    # loop over every voxel
-    for x in range(result_img_arr.shape[2]):    #64
-        for y in range(result_img_arr.shape[1]):    #64
-            for z in range(result_img_arr.shape[0]):    #64
+    # loop over every voxel and create segmentation mask
+    for x in range(result_img_arr.shape[2]):
+        for y in range(result_img_arr.shape[1]):
+            for z in range(result_img_arr.shape[0]):
                 # values > thresh will be labeled as segmentation mask
                 if result_img_arr[x][y][z][0] > thresh:
                     pred_map[z, y, x] = organ_label # TODO: z,y,x?
@@ -115,6 +118,7 @@ def get_dict_of_files(path):
 # assuming files contain patient numbers anywhere in the filename
 # assuming files contain organ numbers followed by "_bb" anywhere in the filename
 def get_dict_of_paths(path, organ=None):
+    # if an organ was given, check if name is valid and get label for organ
     if organ is not None:
         organ_label = get_organ_label(organ)
         organ_label = "{}_bb".format(organ_label)
@@ -128,21 +132,27 @@ def get_dict_of_paths(path, organ=None):
         patient_no = int(regex.search(file.name).group(0))  # find patient number in file name
 
         if organ is not None:
+            # write filepath (to file that contains the organ label) into dictionary with patient number as key
             if organ_label in file.name:
-                dict_of_paths[patient_no] = file.path  # write filepath into dictionary with patient number as key
+                dict_of_paths[patient_no] = file.path
         else:
-            dict_of_paths[patient_no] = file.path  # write filepath into dictionary with patient number as key
+            # write filepath into dictionary with patient number as key
+            dict_of_paths[patient_no] = file.path
 
     return dict_of_paths
 
 
 # raises an error message if all 3 are not the exact same length
 def check_if_all_files_are_complete(scan_files, gt_seg_files, box_paths):
+    # get number of elements
     len1 = len(scan_files)
     len2 = len(gt_seg_files)
     len3 = len(box_paths)
+
+    #  check for error
     if not (len1 == len2 == len3):
-        raise ValueError('Every Patient needs a Scan, BBs for all organs and segmentations. One of theses is missing')
+        raise ValueError('Every Patient needs a Scan, BBs for all organs and segmentations. '
+                         'One of theses is missing')
     else:
         return len1
 
@@ -152,9 +162,9 @@ def check_if_all_files_are_complete(scan_files, gt_seg_files, box_paths):
 def crop_out_bbs(dict_files, dict_box_paths, save_path, organ=None):
     # loop through all patients
     number_of_patients = len(dict_files)
+
     #TODO: nicht von 0 bis länge sondern für jeden key im dictionary
     for i in range(0, number_of_patients):
-        print(i)
         # access relevant patient files
         img = dict_files[i]
         box_path = dict_box_paths[i]
@@ -183,7 +193,6 @@ def resample_files(path, save_path, x, y, z):
 
 
 def get_training_data(path, number_of_files, y_or_X="X"):
-
     # differentiate between training data/Scans (X_train) and labels/Segmentations (y_train)
     if y_or_X == "X":
         data = np.zeros((number_of_files, 64, 64, 64, 1), dtype=np.uint8)  # define X_train array
@@ -203,4 +212,22 @@ def get_training_data(path, number_of_files, y_or_X="X"):
         index = index + 1
 
     return data
+
+
+def get_segmentation_masks(results, path, save_path, organ, threshold):
+    seg_masks = []
+    for i in range(0, len(results)):
+
+        result = results[i]
+
+        # check voxel values against treshold and get segmentationmask
+        pred_map = get_segmentation_mask(result, organ, threshold)
+
+        # save cropped array as nifti file with patient number in name
+        input_file = nib.load("{}{}.nii.gz".format(path, i))    # reference file
+        new_img = nib.Nifti1Image(pred_map, input_file.affine, input_file.header)
+        nib.save(new_img, '{}seg{}.nii.gz'.format(save_path, i))
+
+    #TODO:
+    return seg_masks
 
