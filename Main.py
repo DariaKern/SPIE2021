@@ -17,7 +17,8 @@ import tensorflow as tf
 from pathlib import Path
 from Data import get_dict_of_files, get_dict_of_paths, \
     check_if_all_files_are_complete, crop_out_bbs, resample_files, \
-    get_training_data, get_segmentation_masks, split_train_test
+    get_training_data, get_segmentation_masks, split_train_test, \
+    resample_files_reverse
 from UNet import generate_U_Net, train_U_Net, plot_history, generate_metrics
 
 
@@ -39,6 +40,9 @@ ORGAN = "liver"
 # define train-test split (NEEDED)
 # 0.00 (0%) - 1.00 (100%) percentage of test files among All files
 PERCENTAGE_TEST_SPLIT = 0.1
+
+# define threshold for segmentation mask
+THRESH = 0.5
 
 # define validation split  (Default = 0.1)
 # 0.00 (0%) - 1.00 (100%) percentage of validation files among Test files
@@ -64,6 +68,7 @@ save_path_y_train = "{}y train/".format(SAVE_PATH)
 save_path_X_test = "{}X test/".format(SAVE_PATH)
 save_path_y_test = "{}y test/".format(SAVE_PATH)
 save_path_results = "{}Result-SEG/".format(SAVE_PATH)
+save_path_temp = "{}temp/".format(SAVE_PATH)
 Path(save_path_cropped_scans).mkdir(parents=True, exist_ok=True)
 Path(save_path_cropped_seg).mkdir(parents=True, exist_ok=True)
 Path(save_path_X_train).mkdir(parents=True, exist_ok=True)
@@ -71,6 +76,7 @@ Path(save_path_y_train).mkdir(parents=True, exist_ok=True)
 Path(save_path_X_test).mkdir(parents=True, exist_ok=True)
 Path(save_path_y_test).mkdir(parents=True, exist_ok=True)
 Path(save_path_results).mkdir(parents=True, exist_ok=True)
+Path(save_path_temp).mkdir(parents=True, exist_ok=True)
 
 
 '''_____________________________________________________________________________________________'''
@@ -81,7 +87,7 @@ Path(save_path_results).mkdir(parents=True, exist_ok=True)
 dict_scan_files = get_dict_of_files(CT_SCANS_PATH)  # load all ct scans
 dict_gt_seg_files = get_dict_of_files(GT_SEG_PATH)  # load all gt segmentations
 dict_organ_gt_box_paths = get_dict_of_paths(GT_BB_PATH, ORGAN)  # load all paths to gt bbs of organ
-number_of_patients = check_if_all_files_are_complete(dict_scan_files, dict_gt_seg_files, dict_organ_gt_box_paths)
+check_if_all_files_are_complete(dict_scan_files, dict_gt_seg_files, dict_organ_gt_box_paths)
 
 
 '''_____________________________________________________________________________________________'''
@@ -89,13 +95,12 @@ number_of_patients = check_if_all_files_are_complete(dict_scan_files, dict_gt_se
 '''_____________________________________________________________________________________________'''
 
 # crop out area of interest where the organ is
-crop_out_bbs(dict_scan_files, dict_organ_gt_box_paths, save_path_cropped_scans)
-crop_out_bbs(dict_gt_seg_files, dict_organ_gt_box_paths, save_path_cropped_seg, ORGAN)
+#crop_out_bbs(dict_scan_files, dict_organ_gt_box_paths, save_path_cropped_scans)
+#crop_out_bbs(dict_gt_seg_files, dict_organ_gt_box_paths, save_path_cropped_seg, ORGAN)
 
 # resample files to make them fit into the U-Net (64x64x64)
-resample_files(save_path_cropped_scans, save_path_X_train, 64, 64, 64)
-resample_files(save_path_cropped_seg, save_path_y_train, 64, 64, 64)
-
+#resample_files(save_path_cropped_scans, save_path_X_train, 64, 64, 64)
+#resample_files(save_path_cropped_seg, save_path_y_train, 64, 64, 64)
 
 '''_____________________________________________________________________________________________'''
 '''|...............................PREPARE TRAINING & TEST DATA................................|'''
@@ -116,11 +121,11 @@ y_test = get_training_data(save_path_y_test, "y")
 '''_____________________________________________________________________________________________'''
 
 # generate the U-Net model
-architecture = generate_U_Net(64, 64, 64, 1)
+#architecture = generate_U_Net(64, 64, 64, 1)
 
 # train U-Net on training data and save it
-model, history = train_U_Net(architecture, X_train, y_train, SAVE_PATH)
-plot_history(history)
+#model, history = train_U_Net(architecture, X_train, y_train, SAVE_PATH)
+#plot_history(history)
 
 
 '''_____________________________________________________________________________________________'''
@@ -134,15 +139,67 @@ model = load_model("{}U-Net.h5".format(SAVE_PATH))
 results = model.predict(X_test, verbose=1)
 
 # generate segmentation masks from results
-seg_masks = get_segmentation_masks(results, save_path_X_test, save_path_results, ORGAN, 0.3)
+get_segmentation_masks(results, save_path_X_test, save_path_results, ORGAN, THRESH)
 
 # Generate generalization metrics (evaluate the model)
 generate_metrics(model, X_test, y_test)
 
+'''_____________________________________________________________________________________________'''
+'''|.................................POSTPROCESS DATA...........................................|'''
+'''_____________________________________________________________________________________________'''
+# go through bb files of results
 
-#TODO:
-# bei UNET.py train wird momentan traniert wie bei Mietzner im Code
-# bei UNet model save wirklich notwendig da Model Checkpointer glaub schon das beste speichert?
+# resample files to make them fit into the respective Bounding Box (??x??x??)
+resample_files_reverse(save_path_results, save_path_temp, dict_organ_gt_box_paths, dict_scan_files)
+
+exit()
+
+
+
+
+
+#TODO Tuesday: Zahlen noch rumprobieren und dann um segembtation mask teil kürzen da es den schon gibt
+import nibabel as nib
+import numpy as np
+from Data import get_bb_coordinates
+from helpers import nifti_image_affine_reader, bb_mm_to_vox
+
+result_arr = results[0] # first results
+curr_key = 45
+orig_img = dict_gt_seg_files[curr_key]
+orig_bb = dict_organ_gt_box_paths[curr_key]
+
+# load original image
+orig_img_arr = orig_img.get_fdata()
+
+# transform bb from mm to vox
+bb_coords = get_bb_coordinates(orig_bb)  # get bb coordinates
+print(bb_coords)
+spacing, offset = nifti_image_affine_reader(orig_img)
+vox_170 = bb_mm_to_vox(bb_coords, spacing, offset)
+print('Coordinates of area in vox: ', vox_170)
+
+# make numpy int array
+vox_170_int = np.asarray(vox_170)
+vox_170_int = vox_170_int.astype(int)
+
+
+#for x in range(result_arr.shape[0]):
+pred_map_170 = np.zeros((orig_img_arr.shape[0], orig_img_arr.shape[1], orig_img_arr.shape[2]))
+for x in range(64):
+    for y in range(64):
+        for z in range(64):
+            if result_arr[x][y][z][0] > 0.3:
+                x_real = x + region_170[0]
+                y_real = y + region_170[2]
+                z_real = z + region_170[4]
+
+                pred_map_170[x_real, y_real,z_real] = 170
+
+new_img = nib.Nifti1Image(pred_map_170, orig_img.affine, orig_img.header)
+nib.save(new_img, '{}{}.nii.gz'.format(SAVE_PATH, "hehhe"))
+
+
 
 '''
 # save result #ERROR: Doesn't save the image spacing and stuff

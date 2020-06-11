@@ -44,10 +44,12 @@ def crop_out_bb(img, box_path):
 # resamples an image to the given target dimensions
 # returns image with new dimensions
 def resample_file(sitk_img, target_img_x, target_img_y, target_img_z):
+    #TODO: Before: width, height, depth. but resampled image was rotated
     # get old Image size
-    img_x = sitk_img.GetWidth()
+    img_x = sitk_img.GetDepth()
     img_y = sitk_img.GetHeight()
-    img_z = sitk_img.GetDepth()
+    img_z = sitk_img.GetWidth()
+    print("resample file: {},{},{}".format(img_x, img_y, img_z))
 
     # get old Spacing (oSpac = old Voxel Size)
     oSpac = sitk_img.GetSpacing()
@@ -80,17 +82,19 @@ def get_segmentation_mask(result_img_arr, organ, thresh):
     organ_label = get_organ_label(organ)
 
     # create empty (only zeros) segmentation mask with same siza as result_img_arr
-    pred_map = np.zeros((result_img_arr.shape[2],
+    # should be 64,64,64
+    pred_map = np.zeros((result_img_arr.shape[0],
                          result_img_arr.shape[1],
-                         result_img_arr.shape[0]))
+                         result_img_arr.shape[2]))
 
     # loop over every voxel and create segmentation mask
-    for x in range(result_img_arr.shape[2]):
+    for x in range(result_img_arr.shape[0]):
         for y in range(result_img_arr.shape[1]):
-            for z in range(result_img_arr.shape[0]):
+            for z in range(result_img_arr.shape[2]):
                 # values > thresh will be labeled as segmentation mask
-                if result_img_arr[x][y][z][0] > thresh:
-                    pred_map[z, y, x] = organ_label # TODO: z,y,x?
+                # result_img_arr should have shape 64,64,64,1
+                if result_img_arr[x][y][z][0] >  thresh:
+                    pred_map[z, y, x] = organ_label # TODO: WIESO? die resampleten Bilder sind ja jetzt auch nicht mehr verdreht
 
     return pred_map
 
@@ -172,7 +176,6 @@ def crop_out_bbs(dict_files, dict_box_paths, save_path, organ=None):
     #number_of_patients = len(dict_files)
 
     print("cropping out bounding boxes (area of interest)")
-    #TODO: nicht von 0 bis länge sondern für jeden key im dictionary
     index = 0  # keep extra index in case patients skip a number
     for key in sorted(dict_files.keys()):
         # access relevant patient files
@@ -208,6 +211,7 @@ def resample_files(path, save_path, x, y, z):
     shutil.rmtree(save_path, ignore_errors=True)
     Path(save_path).mkdir(parents=True, exist_ok=True)
 
+
     print("resampling files in '{}'".format(path))
     counter = 0
     for file in os.scandir(path):
@@ -241,6 +245,7 @@ def get_training_data(path, y_or_X="X"):
         img = sitk.ReadImage(file_path)  # load file
         arr_img = sitk.GetArrayFromImage(img)  # convert to numpy array
         arr_img = np.expand_dims(arr_img, axis=3)  # add a fourth dimension
+        print(arr_img.shape)
         data[index] = arr_img  # add to data
         index = index + 1
 
@@ -255,7 +260,6 @@ def get_segmentation_masks(results, path_original_files, save_path, organ, thres
     # read test files in patient order and write them into data
     dict_original_files_paths = get_dict_of_paths(path_original_files)
 
-    seg_masks = []
     print("get segmentation masks")
     for i in range(0, len(results)):
         result = results[i]
@@ -269,9 +273,6 @@ def get_segmentation_masks(results, path_original_files, save_path, organ, thres
         input_file = nib.load(curr_file_path)    # reference file
         new_img = nib.Nifti1Image(pred_map, input_file.affine, input_file.header)
         nib.save(new_img, '{}seg{}.nii.gz'.format(save_path, curr_key))
-
-    #TODO:
-    return seg_masks
 
 
 def split_train_test(path_train, path_test, split):
@@ -300,4 +301,74 @@ def split_train_test(path_train, path_test, split):
         test_count = test_count + 1
 
 
+def resample_files_reverse(path, save_path, dict_bb_paths, dict_scan_files):
+    # delete and recreate folder with results
+    print("delete and recreate {}".format(save_path))
+    shutil.rmtree(save_path, ignore_errors=True)
+    Path(save_path).mkdir(parents=True, exist_ok=True)
 
+    print("resampling files in '{}'".format(path))
+    for file in os.scandir(path):
+        # find patient number in file name
+        regex = re.compile(r'\d+')
+        patient_no = int(regex.search(file.name).group(0))
+
+        # load respective original CT-Scan and get some info
+        orig_img = dict_scan_files[patient_no]  # returns a nibabel file
+        orig_img_arr = orig_img.get_fdata()
+        spacing, offset = nifti_image_affine_reader(orig_img)
+
+        # get vox coordinates of respective bb to calculate dimensions
+        orig_bb = dict_bb_paths[patient_no]
+        bb_coords = get_bb_coordinates(orig_bb)
+        vox_bb = bb_mm_to_vox(bb_coords, spacing, offset)
+
+        # get start and end position of bb in CT-Scan
+        x1_vox_bb = int(vox_bb[1])
+        x0_vox_bb = int(vox_bb[0])
+        y1_vox_bb = int(vox_bb[3])
+        y0_vox_bb = int(vox_bb[2])
+        z1_vox_bb = int(vox_bb[5])
+        z0_vox_bb = int(vox_bb[4])
+
+        # calculate dimensions of bb
+        y_vox_bb = y1_vox_bb - y0_vox_bb
+        x_vox_bb = x1_vox_bb - x0_vox_bb
+        z_vox_bb = z1_vox_bb - z0_vox_bb
+
+        # resample to original cut-out size and save file
+        sitk_img = sitk.ReadImage(file.path)
+        resampled = resample_file(sitk_img, x_vox_bb, y_vox_bb, z_vox_bb)
+        resmapled_img_arr = sitk.GetArrayFromImage(resampled)
+
+        # put the cut-out(cropped out area) back into its right position
+        # in an image with same size as original CT-Scan
+        result_img_arr = np.zeros((orig_img_arr.shape[0],
+                                   orig_img_arr.shape[1],
+                                   orig_img_arr.shape[2]))
+
+        #print out some stuff
+        print("bb dimensions: {}, {}, {}".format(x_vox_bb, y_vox_bb, z_vox_bb))
+        print("resampled image shape: {}".format(resmapled_img_arr.shape))
+        print("result image shape: {}".format(result_img_arr.shape))
+        print("vox_bb: {}, {}, {}".format(int(vox_bb[0]),int(vox_bb[2]),int(vox_bb[4])))
+
+        for a in range(resmapled_img_arr.shape[0]):
+            for b in range(resmapled_img_arr.shape[1]):
+                for c in range(resmapled_img_arr.shape[2]):
+                    if resmapled_img_arr[a][b][c] > 0:
+
+                        x_result = c + y0_vox_bb
+                        y_result = b + x0_vox_bb
+                        z_result = a + z0_vox_bb
+                        #print("x_result = {} + {} = {}".format(x, int(vox_bb[0]), x_result))
+                        #print("y_result = {} + {} = {}".format(y, int(vox_bb[2]), y_result))
+                        #print("z_result = {} + {} = {}".format(z, int(vox_bb[4]), z_result))
+                        result_img_arr[x_result, y_result, z_result] = resmapled_img_arr[a][b][c]
+
+        # save cropped array as nifti file with patient number in name
+        new_img = nib.Nifti1Image(resmapled_img_arr, orig_img.affine, orig_img.header)
+        nib.save(new_img, '{}{}.nii.gz'.format(save_path, "{}".format(patient_no)))
+        #sitk.WriteImage(resampled, "{}{}".format(save_path, file.name))
+
+    print("done. saved resampled files to '{}'".format(save_path))

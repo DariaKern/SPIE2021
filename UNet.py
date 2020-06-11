@@ -23,10 +23,10 @@ import tensorflow as tf
 # generate the U-Net architecture and return it
 from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint
 
+def generate_U_Net(IMG_DEPTH, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS):
 
-def generate_U_Net(IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH, IMG_CHANNELS):
     # Build U-Net model
-    inputs = Input((IMG_HEIGHT, IMG_WIDTH, IMG_DEPTH, IMG_CHANNELS))
+    inputs = Input((IMG_DEPTH, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
     s = Lambda(lambda x: x / 255)(inputs)
 
     c1 = Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(s)
