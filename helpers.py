@@ -2,6 +2,11 @@
 HELPING METHODS
 """
 
+import shutil
+from pathlib import Path
+import os
+
+
 '''_____________________________________________________________________________________________'''
 '''|.................................Helping Methods...........................................|'''
 '''_____________________________________________________________________________________________'''
@@ -127,3 +132,16 @@ def nifti_image_affine_reader(img):
     offset = [offset_x, offset_y, offset_z]
 
     return spacing, offset
+
+
+# deletes and recreates a folder
+def delete_recreate_folder(path):
+    print("delete and recreate {}".format(path))
+    shutil.rmtree(path, ignore_errors=True)
+    Path(path).mkdir(parents=True, exist_ok=True)
+
+
+# move files from folder a to folder b
+def move_files(path, save_path):
+    for file in os.scandir(path):
+        shutil.move(file.path, "{}{}".format(save_path, file.name))

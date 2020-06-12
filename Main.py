@@ -10,6 +10,14 @@ Execute:
 5.Prepare Training & Test Data: leave as is
 6.Train U-Net: can be commented out after training was done once
 7.Apply U-Net: leave as is
+8.Postprocess Data
+
+Results folder creation timeline:
+1. Cropped-CT-Scans & Cropped-SEG (after cropping out bb area of interest)
+2. X train, y train, X test, y test (after resampling to input size of U-Net)
+3. Result-SEG (after applying the U-Net on X test)
+4. reverse resample (after resampling Result-SEG from output size of U-Net back to bb area of interest size)
+5. reverse crop (after putting reverse resample (area of interest) back to where it was cropped out from)
 """
 
 from tensorflow.keras.models import load_model
@@ -18,7 +26,7 @@ from pathlib import Path
 from Data import get_dict_of_files, get_dict_of_paths, \
     check_if_all_files_are_complete, crop_out_bbs, resample_files, \
     get_training_data, get_segmentation_masks, split_train_test, \
-    resample_files_reverse
+    resample_files_reverse, crop_files_reverse
 from UNet import generate_U_Net, train_U_Net, plot_history, generate_metrics
 
 
@@ -68,7 +76,8 @@ save_path_y_train = "{}y train/".format(SAVE_PATH)
 save_path_X_test = "{}X test/".format(SAVE_PATH)
 save_path_y_test = "{}y test/".format(SAVE_PATH)
 save_path_results = "{}Result-SEG/".format(SAVE_PATH)
-save_path_temp = "{}temp/".format(SAVE_PATH)
+save_path_rr = "{}reverse resample/".format(SAVE_PATH)
+save_path_rc = "{}reverse crop/".format(SAVE_PATH)
 Path(save_path_cropped_scans).mkdir(parents=True, exist_ok=True)
 Path(save_path_cropped_seg).mkdir(parents=True, exist_ok=True)
 Path(save_path_X_train).mkdir(parents=True, exist_ok=True)
@@ -76,7 +85,8 @@ Path(save_path_y_train).mkdir(parents=True, exist_ok=True)
 Path(save_path_X_test).mkdir(parents=True, exist_ok=True)
 Path(save_path_y_test).mkdir(parents=True, exist_ok=True)
 Path(save_path_results).mkdir(parents=True, exist_ok=True)
-Path(save_path_temp).mkdir(parents=True, exist_ok=True)
+Path(save_path_rr).mkdir(parents=True, exist_ok=True)
+Path(save_path_rc).mkdir(parents=True, exist_ok=True)
 
 
 '''_____________________________________________________________________________________________'''
@@ -98,9 +108,10 @@ check_if_all_files_are_complete(dict_scan_files, dict_gt_seg_files, dict_organ_g
 #crop_out_bbs(dict_scan_files, dict_organ_gt_box_paths, save_path_cropped_scans)
 #crop_out_bbs(dict_gt_seg_files, dict_organ_gt_box_paths, save_path_cropped_seg, ORGAN)
 
-# resample files to make them fit into the U-Net (64x64x64)
+# resample files to make them fit into the U-Net
+# INFO: U-Net:(Width, Height, Depth) resample files:(Depth, Height, Width)
 #resample_files(save_path_cropped_scans, save_path_X_train, 64, 64, 64)
-#resample_files(save_path_cropped_seg, save_path_y_train, 64, 64, 64)
+#resample_files(save_path_cropped_seg, save_path_y_train, 64,  64, 64)
 
 '''_____________________________________________________________________________________________'''
 '''|...............................PREPARE TRAINING & TEST DATA................................|'''
@@ -109,9 +120,11 @@ check_if_all_files_are_complete(dict_scan_files, dict_gt_seg_files, dict_organ_g
 split_train_test(save_path_X_train, save_path_X_test, PERCENTAGE_TEST_SPLIT)
 split_train_test(save_path_y_train, save_path_y_test, PERCENTAGE_TEST_SPLIT)
 
+# get training data in format Width, Height, Depth, Channels
 X_train = get_training_data(save_path_X_train)
 y_train = get_training_data(save_path_y_train, "y")
 
+# get test data in format Width, Height, Depth, Channels
 X_test = get_training_data(save_path_X_test)
 y_test = get_training_data(save_path_y_test, "y")
 
@@ -120,7 +133,7 @@ y_test = get_training_data(save_path_y_test, "y")
 '''|...................................TRAIN U-NET.............................................|'''
 '''_____________________________________________________________________________________________'''
 
-# generate the U-Net model
+# generate the U-Net model (Width, Height, Depth, Channels)
 #architecture = generate_U_Net(64, 64, 64, 1)
 
 # train U-Net on training data and save it
@@ -135,7 +148,7 @@ y_test = get_training_data(save_path_y_test, "y")
 # load U-Net
 model = load_model("{}U-Net.h5".format(SAVE_PATH))
 
-# apply U-Net on test data
+# apply U-Net on test data and get results in format Width, Height, Depth, Channels
 results = model.predict(X_test, verbose=1)
 
 # generate segmentation masks from results
@@ -150,8 +163,10 @@ generate_metrics(model, X_test, y_test)
 # go through bb files of results
 
 # resample files to make them fit into the respective Bounding Box (??x??x??)
-resample_files_reverse(save_path_results, save_path_temp, dict_organ_gt_box_paths, dict_scan_files)
+resample_files_reverse(save_path_results, save_path_rr, dict_organ_gt_box_paths, dict_scan_files)
 
+# put area of interest back into original position
+crop_files_reverse(save_path_rr, save_path_rc, dict_organ_gt_box_paths, dict_scan_files)
 exit()
 
 
