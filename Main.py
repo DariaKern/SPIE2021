@@ -6,7 +6,7 @@ Execute:
     define test split
 2.GPU & Paths: leave as is
 3.Load Data: leave as is
-4.Preprocess Data: can be commented out after preprocessing was done once
+4.Preprocess Data: can be commented out after pre-processing was done once
 5.Prepare Training & Test Data: leave as is
 6.Train U-Net: can be commented out after training was done once
 7.Apply U-Net: leave as is
@@ -160,66 +160,10 @@ generate_metrics(model, X_test, y_test)
 '''_____________________________________________________________________________________________'''
 '''|.................................POSTPROCESS DATA...........................................|'''
 '''_____________________________________________________________________________________________'''
-# go through bb files of results
 
 # resample files to make them fit into the respective Bounding Box (??x??x??)
 resample_files_reverse(save_path_results, save_path_rr, dict_organ_gt_box_paths, dict_scan_files)
 
 # put area of interest back into original position
 crop_files_reverse(save_path_rr, save_path_rc, dict_organ_gt_box_paths, dict_scan_files)
-exit()
 
-
-
-
-
-#TODO Tuesday: Zahlen noch rumprobieren und dann um segembtation mask teil kürzen da es den schon gibt
-import nibabel as nib
-import numpy as np
-from Data import get_bb_coordinates
-from helpers import nifti_image_affine_reader, bb_mm_to_vox
-
-result_arr = results[0] # first results
-curr_key = 45
-orig_img = dict_gt_seg_files[curr_key]
-orig_bb = dict_organ_gt_box_paths[curr_key]
-
-# load original image
-orig_img_arr = orig_img.get_fdata()
-
-# transform bb from mm to vox
-bb_coords = get_bb_coordinates(orig_bb)  # get bb coordinates
-print(bb_coords)
-spacing, offset = nifti_image_affine_reader(orig_img)
-vox_170 = bb_mm_to_vox(bb_coords, spacing, offset)
-print('Coordinates of area in vox: ', vox_170)
-
-# make numpy int array
-vox_170_int = np.asarray(vox_170)
-vox_170_int = vox_170_int.astype(int)
-
-
-#for x in range(result_arr.shape[0]):
-pred_map_170 = np.zeros((orig_img_arr.shape[0], orig_img_arr.shape[1], orig_img_arr.shape[2]))
-for x in range(64):
-    for y in range(64):
-        for z in range(64):
-            if result_arr[x][y][z][0] > 0.3:
-                x_real = x + region_170[0]
-                y_real = y + region_170[2]
-                z_real = z + region_170[4]
-
-                pred_map_170[x_real, y_real,z_real] = 170
-
-new_img = nib.Nifti1Image(pred_map_170, orig_img.affine, orig_img.header)
-nib.save(new_img, '{}{}.nii.gz'.format(SAVE_PATH, "hehhe"))
-
-
-
-'''
-# save result #ERROR: Doesn't save the image spacing and stuff
-import SimpleITK as sitk
-result_img = sitk.GetImageFromArray(pred_map)
-sitk.WriteImage(result_img, "{}{}".format(SAVE_PATH, "SITKresult.nii.gz"))
-
-'''

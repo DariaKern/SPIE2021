@@ -145,3 +145,12 @@ def delete_recreate_folder(path):
 def move_files(path, save_path):
     for file in os.scandir(path):
         shutil.move(file.path, "{}{}".format(save_path, file.name))
+
+
+def show_user_feedback(index):
+    index = index + 1
+    if index % 10 == 0:
+        print(".", end='')
+
+    return index
+
