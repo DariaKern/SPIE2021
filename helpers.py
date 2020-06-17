@@ -44,21 +44,21 @@ def get_bb_coordinates(box_path):
 
     # get coordinates
     numbers1 = lines[5].split()
-    x = float(numbers1[0])
-    y2 = float(numbers1[1])  # TODO
-    z = float(numbers1[2])
+    x0 = float(numbers1[0])
+    y1 = float(numbers1[1])  # TODO
+    z0 = float(numbers1[2])
 
     # get coordinates
     numbers2 = lines[11].split()
-    x2 = float(numbers2[0])
-    y = float(numbers2[1])  # TODO
-    z2 = float(numbers2[2])
+    x1 = float(numbers2[0])
+    y0 = float(numbers2[1])  # TODO
+    z1 = float(numbers2[2])
 
     # close file
     bb_file.close()
 
     # add coordinates to array
-    bb_coords = [x, x2, y, y2, z, z2]
+    bb_coords = [x0, x1, y0, y1, z0, z1]
 
     return bb_coords
 
