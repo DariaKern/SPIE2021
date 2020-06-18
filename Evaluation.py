@@ -146,7 +146,7 @@ https://realpython.com/openpyxl-excel-spreadsheets-python/
 '''
 
 
-def create_excel_sheet(organ):
+def create_excel_sheet(organ, save_path):
     # create excel sheet
     wb = Workbook()
     sheet = wb.active
@@ -176,12 +176,12 @@ def create_excel_sheet(organ):
     sheet.column_dimensions['E'].width = column_width
     sheet.column_dimensions['F'].width = column_width
 
-    wb.save("Evaluation {}.xlsx".format(organ))
+    wb.save("{}Evaluation {}.xlsx".format(save_path, organ))
 
 
-def fill_excel_sheet(save_path_results, save_path_y_test, organ):
+def fill_excel_sheet(save_path_results, save_path_y_test, organ, save_path):
     # open excel sheet
-    wb = load_workbook(filename="Evaluation {}.xlsx".format(organ))
+    wb = load_workbook(filename="{}Evaluation {}.xlsx".format(save_path, organ))
     sheet = wb.active
 
     # get metrics
@@ -216,4 +216,4 @@ def fill_excel_sheet(save_path_results, save_path_y_test, organ):
         sheet.cell(column=col, row=mean_row, value=mean_value)
         sheet.cell(column=col, row=std_row, value=std_value)
 
-    wb.save("Evaluation {}.xlsx".format(organ))
+    wb.save("{}Evaluation {}.xlsx".format(save_path, organ))

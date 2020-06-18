@@ -28,9 +28,7 @@ from Data import get_dict_of_files, get_dict_of_paths, \
     get_training_data, get_segmentation_masks, split_train_test, \
     resample_files_reverse, crop_files_reverse
 from UNet import generate_U_Net, train_U_Net, plot_history
-from Evaluation import calculate_loss_and_accuracy, calculate_hausdorff_distance, \
-    calculate_label_overlap_measures, evaluate_predictions, \
-    create_excel_sheet, fill_excel_sheet
+from Evaluation import calculate_loss_and_accuracy, create_excel_sheet, fill_excel_sheet
 
 
 '''_____________________________________________________________________________________________'''
@@ -45,8 +43,9 @@ BB_PATH = "/Data/Daria/DATA/BB"
 SAVE_PATH = "/Data/Daria/DATA/RESULTS/"
 
 # organ to segment (NEEDED)
+# INFO: DELETE X train, X, test, y train and y test before switching to another organ
 # choose from 'liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas'
-ORGAN = "liver"
+ORGAN = "right_kidney"
 
 # define train-test split (NEEDED)
 # 0.00 (0%) - 1.00 (100%) percentage of test files among All files
@@ -108,13 +107,13 @@ check_if_all_files_are_complete(dict_scan_files, dict_gt_seg_files, dict_organ_g
 '''_____________________________________________________________________________________________'''
 
 # crop out area of interest where the organ is
-#crop_out_bbs(dict_scan_files, dict_organ_gt_box_paths, save_path_cropped_scans)
-#crop_out_bbs(dict_gt_seg_files, dict_organ_gt_box_paths, save_path_cropped_seg, ORGAN)
+crop_out_bbs(dict_scan_files, dict_organ_gt_box_paths, save_path_cropped_scans)
+crop_out_bbs(dict_gt_seg_files, dict_organ_gt_box_paths, save_path_cropped_seg, ORGAN)
 
 # resample files to make them fit into the U-Net
 # INFO: U-Net:(Width, Height, Depth) resample files:(Depth, Height, Width)
-#resample_files(save_path_cropped_scans, save_path_X_train, 64, 64, 64)
-#resample_files(save_path_cropped_seg, save_path_y_train, 64,  64, 64)
+resample_files(save_path_cropped_scans, save_path_X_train, 64, 64, 64)
+resample_files(save_path_cropped_seg, save_path_y_train, 64, 64, 64)
 
 '''_____________________________________________________________________________________________'''
 '''|...............................PREPARE TRAINING & TEST DATA................................|'''
@@ -137,11 +136,11 @@ y_test = get_training_data(save_path_y_test, "y")
 '''_____________________________________________________________________________________________'''
 
 # generate the U-Net model (Width, Height, Depth, Channels)
-#architecture = generate_U_Net(64, 64, 64, 1)
+architecture = generate_U_Net(64, 64, 64, 1)
 
 # train U-Net on training data and save it
-#model, history = train_U_Net(architecture, X_train, y_train, SAVE_PATH)
-#plot_history(history)
+model, history = train_U_Net(architecture, ORGAN, X_train, y_train, SAVE_PATH)
+plot_history(history)
 
 
 '''_____________________________________________________________________________________________'''
@@ -149,23 +148,23 @@ y_test = get_training_data(save_path_y_test, "y")
 '''_____________________________________________________________________________________________'''
 
 # load U-Net
-model = load_model("{}U-Net.h5".format(SAVE_PATH))
+model = load_model("{}{}U-Net.h5".format(SAVE_PATH, ORGAN))
 
 # apply U-Net on test data and get results in format Width, Height, Depth, Channels
 results = model.predict(X_test, verbose=1)
 
 # generate segmentation masks from results
-#get_segmentation_masks(results, save_path_X_test, save_path_results, ORGAN, THRESH)
+get_segmentation_masks(results, save_path_X_test, save_path_results, ORGAN, THRESH)
 
 '''_____________________________________________________________________________________________'''
 '''|.................................POSTPROCESS DATA...........................................|'''
 '''_____________________________________________________________________________________________'''
 
 # resample files to make them fit into the respective Bounding Box (??x??x??)
-#resample_files_reverse(save_path_results, save_path_rr, dict_organ_gt_box_paths, dict_scan_files)
+resample_files_reverse(save_path_results, save_path_rr, dict_organ_gt_box_paths, dict_scan_files)
 
 # put area of interest back into original position
-#crop_files_reverse(save_path_rr, save_path_rc, dict_organ_gt_box_paths, dict_scan_files)
+crop_files_reverse(save_path_rr, save_path_rc, dict_organ_gt_box_paths, dict_scan_files)
 
 
 '''_____________________________________________________________________________________________'''
@@ -173,8 +172,8 @@ results = model.predict(X_test, verbose=1)
 '''_____________________________________________________________________________________________'''
 
 calculate_loss_and_accuracy(model, X_test, y_test)
-create_excel_sheet(ORGAN)
-fill_excel_sheet(save_path_results, save_path_y_test, ORGAN)
+create_excel_sheet(ORGAN, SAVE_PATH)
+fill_excel_sheet(save_path_results, save_path_y_test, ORGAN, SAVE_PATH)
 
 '''
 Perfect match:

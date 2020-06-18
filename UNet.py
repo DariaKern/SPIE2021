@@ -91,10 +91,10 @@ def generate_U_Net(IMG_WIDTH, IMG_HEIGHT, IMG_DEPTH, IMG_CHANNELS):
     return model
 
 
-def train_U_Net(model, X_train, y_train, save_path, val_split=0.1, batch_size=15, epochs=50):
+def train_U_Net(model, organ, X_train, y_train, save_path, val_split=0.1, batch_size=15, epochs=50):
     # set parameters for training and train the model
     earlystopper = EarlyStopping(patience=10, verbose=1)
-    checkpointer = ModelCheckpoint('{}U-Net.h5'.format(save_path), verbose=1, save_best_only=True)
+    checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(save_path, organ), verbose=1, save_best_only=True)
     history = model.fit(X_train, y_train,
                         validation_split=val_split,
                         batch_size=batch_size,

@@ -277,7 +277,7 @@ def split_train_test(path_train, path_test, split):
     for file in os.scandir(path_test):
         shutil.move(file.path, "{}{}".format(path_train, file.name))
 
-    # check how many files are in train folder
+    # check how many files are in train folder now
     dict_train_file_paths = get_dict_of_paths(path_train)
     counter = len(dict_train_file_paths)
 
