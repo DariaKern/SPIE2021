@@ -122,8 +122,3 @@ def plot_history(history):
     plt.legend(loc="upper left")
     plt.show()
 
-
-def generate_metrics(model, X_test, y_test):
-    # Generate generalization metrics
-    score = model.evaluate(X_test, y_test, verbose=0)
-    print(f'Test loss: {score[0]} / Test accuracy: {score[1]}')

@@ -1,5 +1,6 @@
 """
-
+SITK Image Basics
+https://simpleitk-prototype.readthedocs.io/en/latest/user_guide/plot_image.html
 """
 import os
 import shutil

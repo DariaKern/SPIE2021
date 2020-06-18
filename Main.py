@@ -27,7 +27,10 @@ from Data import get_dict_of_files, get_dict_of_paths, \
     check_if_all_files_are_complete, crop_out_bbs, resample_files, \
     get_training_data, get_segmentation_masks, split_train_test, \
     resample_files_reverse, crop_files_reverse
-from UNet import generate_U_Net, train_U_Net, plot_history, generate_metrics
+from UNet import generate_U_Net, train_U_Net, plot_history
+from Evaluation import calculate_loss_and_accuracy, calculate_hausdorff_distance, \
+    calculate_label_overlap_measures, evaluate_predictions, \
+    create_excel_sheet, fill_excel_sheet
 
 
 '''_____________________________________________________________________________________________'''
@@ -152,18 +155,32 @@ model = load_model("{}U-Net.h5".format(SAVE_PATH))
 results = model.predict(X_test, verbose=1)
 
 # generate segmentation masks from results
-get_segmentation_masks(results, save_path_X_test, save_path_results, ORGAN, THRESH)
-
-# Generate generalization metrics (evaluate the model)
-generate_metrics(model, X_test, y_test)
+#get_segmentation_masks(results, save_path_X_test, save_path_results, ORGAN, THRESH)
 
 '''_____________________________________________________________________________________________'''
 '''|.................................POSTPROCESS DATA...........................................|'''
 '''_____________________________________________________________________________________________'''
 
 # resample files to make them fit into the respective Bounding Box (??x??x??)
-resample_files_reverse(save_path_results, save_path_rr, dict_organ_gt_box_paths, dict_scan_files)
+#resample_files_reverse(save_path_results, save_path_rr, dict_organ_gt_box_paths, dict_scan_files)
 
 # put area of interest back into original position
-crop_files_reverse(save_path_rr, save_path_rc, dict_organ_gt_box_paths, dict_scan_files)
+#crop_files_reverse(save_path_rr, save_path_rc, dict_organ_gt_box_paths, dict_scan_files)
 
+
+'''_____________________________________________________________________________________________'''
+'''|......................................EVALUATE..............................................|'''
+'''_____________________________________________________________________________________________'''
+
+calculate_loss_and_accuracy(model, X_test, y_test)
+create_excel_sheet(ORGAN)
+fill_excel_sheet(save_path_results, save_path_y_test, ORGAN)
+
+'''
+Perfect match:
+average hausdorff distance 0.0
+hausdorff distance 0.0
+dice coefficient 1.0
+mean overlap 1.0
+volume similarity 0.0
+'''

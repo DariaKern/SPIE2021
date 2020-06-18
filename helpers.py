@@ -75,7 +75,7 @@ def mm_to_vox(coord_list, spacing, offset):
     return coord_vox
 
 
-# transform overlap of bounding box and image/segmentation to vox coordinates
+# transform bounding coordinates from mm to vox
 def bb_mm_to_vox(bb_coords, spacing, offset):
     # split coordinates into min and max coordinate values of bounding box
     bb_coords_min_mm = [bb_coords[0], bb_coords[2], bb_coords[4]]  # x1, y1, z1
