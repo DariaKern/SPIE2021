@@ -19,6 +19,8 @@ import re
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, NamedStyle, Font
 import numpy as np
+from helpers import get_organ_label, delete_recreate_folder, nifti_image_affine_reader, bb_mm_to_vox, get_bb_coordinates
+import nibabel as nib
 
 
 def calculate_loss_and_accuracy(model, X_test, y_test):
@@ -217,3 +219,69 @@ def fill_excel_sheet(save_path_results, save_path_y_test, organ, save_path):
         sheet.cell(column=col, row=std_row, value=std_value)
 
     wb.save("{}Evaluation {}.xlsx".format(save_path, organ))
+
+
+def get_dict_of_test_data(input_dict, split):
+    result_dict = {}
+    # check how many files are in folder and only take the last few ones
+    total_files = len(input_dict)
+    test = int(total_files * split)
+    counter = 0
+    for key in sorted(input_dict.keys(), reverse=True):
+        if counter == test: break
+        result_dict[key] = input_dict[key]
+        counter = counter + 1
+
+    return result_dict
+
+
+def get_segmentation_mask2(img, organ, bb_coords):
+
+    img_arr = img.get_fdata()
+    spacing, offset = nifti_image_affine_reader(img)
+    # get respective label for the given organ
+    organ_label = get_organ_label(organ)
+
+    # create empty (only zeros) segmentation mask with same siza as result_img_arr
+    # should be 64,64,64
+    result_img_arr = np.zeros((img_arr.shape[0],
+                         img_arr.shape[1],
+                         img_arr.shape[2]))
+
+
+    bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset)
+    print(bb_coords_vox)
+
+    # loop over every voxel in area of interest and create segmentation mask
+    for x in range(int(bb_coords_vox[0])-1, int(bb_coords_vox[1])+1):
+        for y in range(int(bb_coords_vox[2])-1, int(bb_coords_vox[3])+1):
+            for z in range(int(bb_coords_vox[4])-1, int(bb_coords_vox[5])+1):
+                # values > thresh will be labeled as segmentation mask
+                # result_img_arr should have shape 64,64,64,1
+                if img_arr[x][y][z] == organ_label:
+                    result_img_arr[x, y, z] = organ_label
+
+    return result_img_arr
+
+
+def get_segmentation_masks2(dict_files, path_ref_files, save_path, organ, dict_bb_paths):
+    delete_recreate_folder(save_path)
+
+    dict_ref_file_paths = get_dict_of_paths(path_ref_files)
+
+    print("get segmentation masks")
+    for key in sorted(dict_files.keys()):
+        file = dict_files[key]
+        bb_path = dict_bb_paths[key]
+        bb_coords = get_bb_coordinates(bb_path)
+
+        # get the i-th reference file (patients in ascending order)
+        curr_file_path = dict_ref_file_paths[key]
+
+        # check voxel values against treshold and get segmentationmask
+        result_img_arr = get_segmentation_mask2(file, organ, bb_coords)
+
+        # save cropped array as nifti file with patient number in name
+        ref_file = nib.load(curr_file_path)    # reference file
+        result_img = nib.Nifti1Image(result_img_arr, ref_file.affine, ref_file.header)
+        nib.save(result_img, '{}seg{}.nii.gz'.format(save_path, key))
