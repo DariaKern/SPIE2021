@@ -6,9 +6,9 @@
 
 import numpy as np
 import SimpleITK as sitk  # https://simpleitk.readthedocs.io/en/master/index.html
-from Data import crop_out_bb, resample_file, get_segmentation_mask
+from Methods import crop_out_bb, resample_file, get_segmentation_mask
 from UNet import generate_U_Net
-from Data import bb_mm_to_vox, get_bb_coordinates, nifti_image_affine_reader
+from Methods import bb_mm_to_vox, get_bb_coordinates, nifti_image_affine_reader
 import nibabel as nib
 import numpy as np
 

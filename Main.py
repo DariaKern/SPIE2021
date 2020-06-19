@@ -25,7 +25,7 @@ Results folder creation timeline:
 from tensorflow.keras.models import load_model
 import tensorflow as tf
 from pathlib import Path
-from Data import get_dict_of_files, get_dict_of_paths, \
+from Methods import get_dict_of_files, get_dict_of_paths, \
     check_if_all_files_are_complete, crop_out_bbs, resample_files, \
     get_training_data, get_segmentation_masks, split_train_test, \
     resample_files_reverse, crop_files_reverse

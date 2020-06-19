@@ -6,12 +6,13 @@ use only after Model was trained with Main
 from tensorflow.keras.models import load_model
 import tensorflow as tf
 from pathlib import Path
-from Data import get_dict_of_files, get_dict_of_paths, \
+from Methods import get_dict_of_files, get_dict_of_paths, \
     crop_out_bbs, resample_files, \
     get_training_data, get_segmentation_masks, \
-    resample_files_reverse, crop_files_reverse
+    resample_files_reverse, crop_files_reverse, \
+    get_dict_of_test_data, get_segmentation_masks2
 from Evaluation import calculate_loss_and_accuracy, create_excel_sheet, \
-    fill_excel_sheet, get_dict_of_test_data, get_segmentation_masks2
+    fill_excel_sheet
 
 '''_____________________________________________________________________________________________'''
 '''|................................DEFINE NEEDED VARIABLES....................................|'''
@@ -93,7 +94,7 @@ crop_out_bbs(dict_scan_files, dict_rrf_organ_box_paths, save_path_cropped_scans)
 # INFO: U-Net:(Width, Height, Depth) resample files:(Depth, Height, Width)
 resample_files(save_path_cropped_scans, save_path_X_test, 64, 64, 64)
 
-get_segmentation_masks2(dict_gt_seg_files, CT_SCANS_PATH, save_path_gt_seg, ORGAN, dict_gt_organ_box_paths)
+get_segmentation_masks2(dict_gt_seg_files, GT_SEG_PATH, save_path_gt_seg, ORGAN, dict_gt_organ_box_paths)
 
 '''_____________________________________________________________________________________________'''
 '''|......................................PREPARE TEST DATA....................................|'''
