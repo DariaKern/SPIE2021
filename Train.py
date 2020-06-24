@@ -1,16 +1,4 @@
 """
-METHODS:
-    generate the U-Net architecture
-    train Model
-    plot -training history
-
-
-generate_U-Net():
-    Source: /home/daria/Desktop/Data/oOoMietzner/Share/Studierendentagung/U-Net/U-Net_Generator.py
-    Changes:
-        -2D -> 3D
-        -add IMG_DEPTH
-
 """
 from tensorflow.keras.layers import Input, Lambda, concatenate, \
     Conv3D, Dropout, MaxPooling3D, Conv3DTranspose
@@ -18,10 +6,8 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.utils import plot_model
 import matplotlib.pyplot as plt
 import tensorflow as tf
-
-
-# generate the U-Net architecture and return it
 from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint
+from SharedMethods import get_organized_data
 
 
 def generate_U_Net(IMG_WIDTH, IMG_HEIGHT, IMG_DEPTH, IMG_CHANNELS):
@@ -91,25 +77,6 @@ def generate_U_Net(IMG_WIDTH, IMG_HEIGHT, IMG_DEPTH, IMG_CHANNELS):
     return model
 
 
-def train_U_Net(model, organ, X_train, y_train, save_path, val_split=0.1, batch_size=15, epochs=50):
-    # set parameters for training and train the model
-    earlystopper = EarlyStopping(patience=10, verbose=1)
-    checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(save_path, organ), verbose=1, save_best_only=True)
-    history = model.fit(X_train, y_train,
-                        validation_split=val_split,
-                        batch_size=batch_size,
-                        epochs=epochs,
-                        callbacks=[earlystopper, checkpointer])
-
-    # generates image with model architecture
-    plot_model(model, to_file='{}U-Net.png'.format(save_path), show_shapes=True)
-
-    #INFO: save U-Net non needed for early stopping already saves the best model
-    #model.save('{}U-Net.h5'.format(save_path))
-
-    return model, history
-
-
 def plot_history(history):
     # Plot history as image: Binary crossentropy & Accuracy
     plt.plot(history.history['loss'], label='binary crossentropy (training data)')
@@ -121,4 +88,33 @@ def plot_history(history):
     plt.xlabel('No. epoch')
     plt.legend(loc="upper left")
     plt.show()
+
+
+def train(SAVE_PATH, ORGAN, val_split=0.1, batch_size=15, epochs=50):
+    # get training data
+    path_x_train_resampled = "{}Xtrain/resampled/".format(SAVE_PATH)
+    path_y_train_resampled = "{}ytrain/resampled/".format(SAVE_PATH)
+    x_train = get_organized_data(path_x_train_resampled)
+    y_train = get_organized_data(path_y_train_resampled, True)
+
+    # generate the U-Net model (Width, Height, Depth, Channels)
+    architecture = generate_U_Net(64, 64, 64, 1)
+
+    # train U-Net on training data and save it
+    # set parameters for training and train the model
+    earlystopper = EarlyStopping(patience=10, verbose=1)
+    checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
+    history = architecture.fit(x_train, y_train,
+                        validation_split=val_split,
+                        batch_size=batch_size,
+                        epochs=epochs,
+                        callbacks=[earlystopper, checkpointer])
+
+    # generate image with model architecture and show training history
+    plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)
+    #plot_history(history)
+
+    #INFO: save U-Net non needed for early stopping already saves the best model
+    #model.save('{}U-Net.h5'.format(save_path))
+
 

@@ -1,32 +1,10 @@
-'''
-Metrics for medical image processing evaluation:
-https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4533825/
-
-Semantic Segmentation:
-https://www.jeremyjordan.me/semantic-segmentation/
-
-How to use sitk filter:
-https://www.programmersought.com/article/5062239478/
-
-About the Filter:
-https://mevislabdownloads.mevis.de/docs/current/FMEwork/ITK/Documentation/Publish/ModuleReference/itkHausdorffDistanceImageFilter.html
-
-'''
-from Methods import get_dict_of_paths
+from SharedMethods import get_dict_of_paths
 import SimpleITK as sitk
 import os
 import re
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, NamedStyle, Font
 import numpy as np
-from HelperMethods import get_organ_label, delete_recreate_folder, nifti_image_affine_reader, bb_mm_to_vox, get_bb_coordinates
-import nibabel as nib
-
-
-def calculate_loss_and_accuracy(model, X_test, y_test):
-    # Generate generalization metrics
-    score = model.evaluate(X_test, y_test, verbose=0)
-    print(f'Test loss: {score[0]} / Test accuracy: {score[1]}')
 
 
 # returns dice coefficent, mean overlap and volume similarity measurements
@@ -148,11 +126,11 @@ https://realpython.com/openpyxl-excel-spreadsheets-python/
 '''
 
 
-def create_excel_sheet(organ, save_path):
+def create_excel_sheet(SAVE_PATH, ORGAN):
     # create excel sheet
     wb = Workbook()
     sheet = wb.active
-    sheet.title = organ
+    sheet.title = ORGAN
 
     # create headings and apply style
     headings_style = NamedStyle(
@@ -178,16 +156,18 @@ def create_excel_sheet(organ, save_path):
     sheet.column_dimensions['E'].width = column_width
     sheet.column_dimensions['F'].width = column_width
 
-    wb.save("{}Evaluation {}.xlsx".format(save_path, organ))
+    wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
 
 
-def fill_excel_sheet(save_path_results, save_path_y_test, organ, save_path):
+def fill_excel_sheet(SAVE_PATH, ORGAN):
     # open excel sheet
-    wb = load_workbook(filename="{}Evaluation {}.xlsx".format(save_path, organ))
+    wb = load_workbook(filename="{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
     sheet = wb.active
 
     # get metrics
-    results, mean, std = evaluate_predictions(save_path_results, save_path_y_test)
+    path_results_orig = "{}results/orig/".format(SAVE_PATH)
+    path_y_test_orig = "{}ytest/orig/".format(SAVE_PATH)
+    results, mean, std = evaluate_predictions(path_results_orig, path_y_test_orig)
 
     # write metrics into excel
     number_of_results = len(results)
@@ -218,6 +198,9 @@ def fill_excel_sheet(save_path_results, save_path_y_test, organ, save_path):
         sheet.cell(column=col, row=mean_row, value=mean_value)
         sheet.cell(column=col, row=std_row, value=std_value)
 
-    wb.save("{}Evaluation {}.xlsx".format(save_path, organ))
+    wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
 
 
+def evaluate(SAVE_PATH, ORGAN):
+    create_excel_sheet(SAVE_PATH, ORGAN)
+    fill_excel_sheet(SAVE_PATH, ORGAN)
