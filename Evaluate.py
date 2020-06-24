@@ -16,14 +16,14 @@ def calculate_label_overlap_measures(gt_img_path, pred_img_path):
     dice_filter = sitk.LabelOverlapMeasuresImageFilter()
     dice_filter.Execute(gt_img, pred_img)
     dice = dice_filter.GetDiceCoefficient()
-    mean_overlap = dice_filter.GetMeanOverlap()
-    volume_similarity = dice_filter.GetVolumeSimilarity()
+    #mean_overlap = dice_filter.GetMeanOverlap()
+    #volume_similarity = dice_filter.GetVolumeSimilarity()
 
     print("dice coefficient {}".format(dice))
-    print("mean overlap {}".format(mean_overlap))
-    print("volume similarity {}".format(volume_similarity))
+    #print("mean overlap {}".format(mean_overlap))
+    #print("volume similarity {}".format(volume_similarity))
 
-    return dice, mean_overlap, volume_similarity
+    return dice
 
 
 # returns hausdorff distance and average hausdorff distance measurements
@@ -42,6 +42,23 @@ def calculate_hausdorff_distance(gt_img_path, pred_img_path):
     print("average hausdorff distance {}".format(avg_hd))
 
     return hd, avg_hd
+
+
+#TODO: takes only 1 image
+def calculate_danielsson_distance(gt_img_path, pred_img_path):
+    # load images
+    gt_img = sitk.ReadImage(gt_img_path)
+    pred_img = sitk.ReadImage(pred_img_path)
+
+    # calculate hausdorff
+    dd_filter = sitk.DanielssonDistanceMapImageFilter()
+    dd_filter.SetSquaredDistance(False)
+    dd_filter.Execute(gt_img, pred_img)
+    dd = dd_filter.GetSquaredDistance()
+
+    print("squared danielsson distance {}".format(dd))
+
+    return dd
 
 
 def calculate_mean(results):
@@ -109,10 +126,12 @@ def evaluate_predictions(pred_path, gt_path):
 
         print("Patient Number : {}".format(patient_no))
         hd, avg_hd = calculate_hausdorff_distance(gt_img_path, prediction.path)
-        dice, avg_ol, vs = calculate_label_overlap_measures(gt_img_path, prediction.path)
+        dice = calculate_label_overlap_measures(gt_img_path, prediction.path)
+        #danielsson = calculate_danielsson_distance(gt_img_path, prediction.path)
+
         print("")
 
-        results.append([patient_no, hd, avg_hd, dice, avg_ol, vs])
+        results.append([patient_no, hd, avg_hd, dice])
 
     mean = calculate_mean(results)
     std = calculate_standard_dv(results)

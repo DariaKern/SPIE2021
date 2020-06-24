@@ -45,9 +45,9 @@ assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
-prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, SPLIT, ORGAN)
-train(SAVE_PATH, ORGAN)
-apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, ORGAN, THRESH)
+#prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, SPLIT, ORGAN)
+#train(SAVE_PATH, ORGAN)
+#apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, ORGAN, THRESH)
 evaluate(SAVE_PATH, ORGAN)
 
 
