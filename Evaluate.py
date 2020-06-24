@@ -2,8 +2,7 @@ from SharedMethods import get_dict_of_paths
 import SimpleITK as sitk
 import os
 import re
-from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Alignment, NamedStyle, Font
+from openpyxl import load_workbook
 import numpy as np
 
 
@@ -126,40 +125,7 @@ https://realpython.com/openpyxl-excel-spreadsheets-python/
 '''
 
 
-def create_excel_sheet(SAVE_PATH, ORGAN):
-    # create excel sheet
-    wb = Workbook()
-    sheet = wb.active
-    sheet.title = ORGAN
-
-    # create headings and apply style
-    headings_style = NamedStyle(
-        name="daria",
-        font=Font(color='000000', bold=True),
-        alignment=Alignment(horizontal='left')
-    )
-    headings_row = '1'
-    headings = ["patient #", "hausdorff dist",
-                "Ø hausdorff dist",
-                "dice coeff", "Ø overlap",
-                "volume similarity"]
-    sheet.append(headings)
-    for cell in sheet[headings_row]:
-        cell.style = headings_style
-
-    # make cells wider
-    column_width = 20
-    sheet.column_dimensions['A'].width = column_width
-    sheet.column_dimensions['B'].width = column_width
-    sheet.column_dimensions['C'].width = column_width
-    sheet.column_dimensions['D'].width = column_width
-    sheet.column_dimensions['E'].width = column_width
-    sheet.column_dimensions['F'].width = column_width
-
-    wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
-
-
-def fill_excel_sheet(SAVE_PATH, ORGAN):
+def evaluate(SAVE_PATH, ORGAN):
     # open excel sheet
     wb = load_workbook(filename="{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
     sheet = wb.active
@@ -199,8 +165,3 @@ def fill_excel_sheet(SAVE_PATH, ORGAN):
         sheet.cell(column=col, row=std_row, value=std_value)
 
     wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
-
-
-def evaluate(SAVE_PATH, ORGAN):
-    create_excel_sheet(SAVE_PATH, ORGAN)
-    fill_excel_sheet(SAVE_PATH, ORGAN)
