@@ -91,25 +91,29 @@ def resample_files(path, target_path, target_depth, target_height, target_width)
 
 # takes the numbers in the names of the patient files in SCAN_PATH
 # and splits all patient numbers into 2 random subsets of a certain size defined by SPLIT
-def split_train_and_test(SCAN_PATH, SPLIT):
+def split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET=None):
     # split train and test
     # count how many files are in SCAN_PATH
     all_patient_numbers = set()
     for file in os.scandir(SCAN_PATH):
-        # find patient number in file name
-        regex = re.compile(r'\d+')
-        patient_no = int(regex.search(file.name).group(0))
+        patient_no = find_patient_no_in_file_name(file.name)
         all_patient_numbers.add(patient_no)
     amount_patients = len(all_patient_numbers)
 
-    # determine size of train and test split
-    test_split_size = int(amount_patients * SPLIT)
+    # determine size of test split and split test patient numbers
+    # if no custom test set is given, random patient numbers will be picked
+    if CUSTOM_TEST_SET is None:
+        test_split_size = int(amount_patients * SPLIT)
+        test_split = set(random.sample(all_patient_numbers, test_split_size))
+    else:
+        test_split_size = len(CUSTOM_TEST_SET)
+        test_split = set(CUSTOM_TEST_SET)
+
+    # determine size of train split and split train patient numbers
+    train_split = all_patient_numbers - test_split
     train_split_size = int(amount_patients - test_split_size)
     print("splitting {} files into {} TRAIN and {} TEST files".format(amount_patients, train_split_size, test_split_size))
 
-    # split train and test patient numbers
-    test_split = set(random.sample(all_patient_numbers, test_split_size))
-    train_split = all_patient_numbers - test_split
 
     return test_split, train_split
 
@@ -230,9 +234,10 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split):
     wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
 
 
-def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN):
+def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET=None):
     # get training data
-    test_split, train_split = split_train_and_test(SCAN_PATH, SPLIT)
+    test_split, train_split = split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
+
     create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split)
     create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)
     create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)

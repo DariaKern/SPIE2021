@@ -102,7 +102,7 @@ def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50)
 
     # train U-Net on training data and save it
     # set parameters for training and train the model
-    earlystopper = EarlyStopping(patience=10, verbose=1)
+    earlystopper = EarlyStopping(patience=20, verbose=1)
     checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
     history = architecture.fit(x_train, y_train,
                         validation_split=val_split,
