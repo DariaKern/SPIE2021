@@ -142,7 +142,7 @@ def crop_files_reverse(path, save_path, bb_folder_path, ref_files_folder_path, O
 
 def apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH):
     # create paths
-    path_results, path_results_resampled, path_results_cropped, path_results_orig = create_paths(SAVE_PATH, "results")
+    path_results, path_results_cropped, path_results_resampled, path_results_orig = create_paths(SAVE_PATH, "results")
     path_x_test_resampled = "{}Xtest/resampled/".format(SAVE_PATH)
 
     # get test data

@@ -42,7 +42,7 @@ def crop_out_bb(img, box_path):
 # crops out the areas of interest (where to organ is supposed to be) defined by the given bounding boxes
 def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number_set, organ=None, isSegmentation=False):
     # organize bbs in bb_folder_path by patient number
-    bb_path_dict = get_dict_of_paths(bb_folder_path, organ) #TODO hier ist ein Problem
+    bb_path_dict = get_dict_of_paths(bb_folder_path, organ)
 
     print("cropping out bounding boxes (area of interest)")
     # go through all files and if they are in patient_number_set, crop out the bb
@@ -52,8 +52,6 @@ def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number
         if patient_number in patient_number_set:
             # access relevant patient files
             bb_path = bb_path_dict[patient_number]
-            print("patient number {} detected in {}".format(patient_number, file.name))
-            print("respective bb path {}".format(bb_path))
             img = nib.load(file)
 
             # crop out box area
