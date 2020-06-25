@@ -229,16 +229,16 @@ def resample_file(sitk_img, target_img_depth, target_img_height, target_img_widt
     return result_img
 
 
-def get_organized_data(path, isSegmentation=False):
+def get_organized_data(path, DIMENSIONS, isSegmentation=False):
     # organize file paths by patient number in dictionary
     dict_file_paths = get_dict_of_paths(path)
 
     # differentiate between images (X) and labels/Segmentations (y)
     number_of_files = len(dict_file_paths)
     if isSegmentation:
-        data = np.zeros((number_of_files, 64, 64, 64, 1), dtype=np.bool)  # define y array
+        data = np.zeros((number_of_files, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], DIMENSIONS[3]), dtype=np.bool)  # define y array
     else:
-        data = np.zeros((number_of_files, 64, 64, 64, 1), dtype=np.uint8)  # define X array
+        data = np.zeros((number_of_files, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], DIMENSIONS[3]), dtype=np.uint8)  # define X array
 
     # load files and transform into arrays (Width, Height, Depth, Channels) and put in data (array of arrays)
     index = 0  # keep extra index in case patients skip a number

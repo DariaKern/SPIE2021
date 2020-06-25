@@ -40,9 +40,9 @@ def crop_out_bb(img, box_path):
 
 
 # crops out the areas of interest (where to organ is supposed to be) defined by the given bounding boxes
-def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number_set, organ=None):
+def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number_set, organ=None, isSegmentation=False):
     # organize bbs in bb_folder_path by patient number
-    bb_path_dict = get_dict_of_paths(bb_folder_path, organ)
+    bb_path_dict = get_dict_of_paths(bb_folder_path, organ) #TODO hier ist ein Problem
 
     print("cropping out bounding boxes (area of interest)")
     # go through all files and if they are in patient_number_set, crop out the bb
@@ -52,6 +52,8 @@ def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number
         if patient_number in patient_number_set:
             # access relevant patient files
             bb_path = bb_path_dict[patient_number]
+            print("patient number {} detected in {}".format(patient_number, file.name))
+            print("respective bb path {}".format(bb_path))
             img = nib.load(file)
 
             # crop out box area
@@ -59,7 +61,7 @@ def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number
 
             # extract segmentation of given organ (only necessary for segmentations)
             # (filter out overlapping segmentations of other organs)
-            if organ is not None:
+            if isSegmentation:
                 organ_label = get_organ_label(organ)
                 result_img_arr[result_img_arr < organ_label] = 0
                 result_img_arr[result_img_arr > organ_label] = 0
@@ -132,7 +134,7 @@ def filter_out_relevant_segmentation(folder_path, target_folder_path, ORGAN):
     print("done. saved filtered files to '{}'".format(target_folder_path))
 
 
-def create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, train_split):
+def create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN):
     print("")
     print("CREATING X TRAIN")
     path_x_train, path_x_train_cropped, path_x_train_resampled, path_x_train_orig = create_paths(SAVE_PATH, "Xtrain")
@@ -140,13 +142,13 @@ def create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, train_split):
     copy_files_to_folder(SCAN_PATH, path_x_train_orig, train_split)
 
     # crop GT BBs out of SCANs
-    crop_out_bbs(SCAN_PATH, GT_BB_PATH, path_x_train_cropped, train_split, organ=None)
+    crop_out_bbs(SCAN_PATH, GT_BB_PATH, path_x_train_cropped, train_split, ORGAN)
 
     # resample cropped out area
-    resample_files(path_x_train_cropped, path_x_train_resampled, 64, 64, 64)
+    resample_files(path_x_train_cropped, path_x_train_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
-def create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, train_split, ORGAN):
+def create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN):
     print("")
     print("CREATING Y TRAIN")
     path_y_train, path_y_train_cropped, path_y_train_resampled, path_y_train_orig = create_paths(SAVE_PATH, "ytrain")
@@ -154,13 +156,13 @@ def create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, train_split, ORGAN):
     copy_files_to_folder(GT_SEG_PATH, path_y_train_orig, train_split)
 
     # crop GT BBs out of GT SEGs
-    crop_out_bbs(GT_SEG_PATH, GT_BB_PATH, path_y_train_cropped, train_split, ORGAN)
+    crop_out_bbs(GT_SEG_PATH, GT_BB_PATH, path_y_train_cropped, train_split, ORGAN, isSegmentation=True)
 
     # resample cropped out area
-    resample_files(path_y_train_cropped, path_y_train_resampled, 64, 64, 64)
+    resample_files(path_y_train_cropped, path_y_train_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
-def create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, test_split):
+def create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN):
     print("")
     print("CREATING X TEST")
     path_x_test, path_x_test_cropped, path_x_test_resampled, path_x_test_orig = create_paths(SAVE_PATH, "Xtest")
@@ -168,10 +170,10 @@ def create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, test_split):
     copy_files_to_folder(SCAN_PATH, path_x_test_orig, test_split)
 
     # crop RRF BBs out of SCANs
-    crop_out_bbs(SCAN_PATH, RRF_BB_PATH, path_x_test_cropped, test_split, organ=None)
+    crop_out_bbs(SCAN_PATH, RRF_BB_PATH, path_x_test_cropped, test_split, ORGAN)
 
     # resample cropped out area
-    resample_files(path_x_test_cropped, path_x_test_resampled, 64, 64, 64)
+    resample_files(path_x_test_cropped, path_x_test_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
 def create_y_test(GT_SEG_PATH, SAVE_PATH, ORGAN, test_split):
@@ -230,13 +232,13 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split):
     wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
 
 
-def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, SPLIT, ORGAN):
+def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN):
     # get training data
     test_split, train_split = split_train_and_test(SCAN_PATH, SPLIT)
     create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split)
-    create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, train_split)
-    create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, train_split, ORGAN)
-    create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, test_split)
+    create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)
+    create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)
+    create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN)
     create_y_test(GT_SEG_PATH, SAVE_PATH, ORGAN, test_split)
 
 

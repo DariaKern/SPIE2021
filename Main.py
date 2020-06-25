@@ -12,7 +12,8 @@ from Evaluate import evaluate
 SCAN_PATH = "/Data/Daria/DATA/CT-Scans/"
 GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
 GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
-RRF_BB_PATH = "/Data/Daria/DATA/BB/"
+RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"
+#RRF_BB_PATH = "/Data/Daria/DATA/BB/"
 SAVE_PATH = "/Data/Daria/DATA/"
 
 # organ to segment (NEEDED)
@@ -28,13 +29,19 @@ SPLIT = 0.1
 # recommended thresh: 0.5, for pancreas: 0.3
 THRESH = 0.5
 
+
+# Define input image size
+DIMENSIONS = [96, 96, 96, 1]
+
 # define validation split  (Default = 0.1)
 # 0.00 (0%) - 1.00 (100%) percentage of validation files among Test files
+VAL_SPLIT = 0.1
 
 # define batch size (Default = 15)
+BATCH = 5
 
 # define number of epochs (Default = 50)
-
+EPOCHS = 50
 '''_____________________________________________________________________________________________'''
 '''|........................................GPU................................................|'''
 '''_____________________________________________________________________________________________'''
@@ -45,13 +52,14 @@ assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
-#prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, SPLIT, ORGAN)
-#train(SAVE_PATH, ORGAN)
-#apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, ORGAN, THRESH)
+prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN)
+train(SAVE_PATH, DIMENSIONS, ORGAN, VAL_SPLIT, BATCH, EPOCHS)
+apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH)
 evaluate(SAVE_PATH, ORGAN)
 
 
 # TODO:
-"""
+"""t
+Eigenen Train und Test Split festlegen
 crop files reverse noch eine MEthode mit crop file reverse für einzelne Datei
 """

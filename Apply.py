@@ -32,6 +32,7 @@ def get_segmentation_mask(img_arr, organ, thresh):
 
     return result_img_arr
 
+
 def get_segmentation_masks(results, path_ref_files, target_path, organ, threshold):
     dict_ref_file_paths = get_dict_of_paths(path_ref_files)
 
@@ -52,9 +53,9 @@ def get_segmentation_masks(results, path_ref_files, target_path, organ, threshol
         nib.save(result_img, '{}seg{}.nii.gz'.format(target_path, curr_key))
 
 
-def resample_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path):
+def resample_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path, ORGAN):
     # organize bb and reference files by patient number in dictionary
-    bb_path_dict = get_dict_of_paths(bb_folder_path)
+    bb_path_dict = get_dict_of_paths(bb_folder_path, ORGAN)
     ref_files_path_dict = get_dict_of_paths(ref_files_folder_path)
 
     print("reverse resampling files in '{}'".format(path))
@@ -95,9 +96,9 @@ def resample_files_reverse(path, target_path, bb_folder_path, ref_files_folder_p
     print("done. saved reverse resampled files to '{}'".format(target_path))
 
 
-def crop_files_reverse(path, save_path, bb_folder_path, ref_files_folder_path):
+def crop_files_reverse(path, save_path, bb_folder_path, ref_files_folder_path, ORGAN):
     # organize bb and reference files by patient number in dictionary
-    bb_path_dict = get_dict_of_paths(bb_folder_path)
+    bb_path_dict = get_dict_of_paths(bb_folder_path, ORGAN)
     ref_files_path_dict = get_dict_of_paths(ref_files_folder_path)
 
     print("reverse cropping files in '{}'".format(path))
@@ -139,13 +140,13 @@ def crop_files_reverse(path, save_path, bb_folder_path, ref_files_folder_path):
     print("done. saved reverse cropped files to '{}'".format(save_path))
 
 
-def apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, ORGAN, THRESH):
+def apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH):
     # create paths
     path_results, path_results_resampled, path_results_cropped, path_results_orig = create_paths(SAVE_PATH, "results")
     path_x_test_resampled = "{}Xtest/resampled/".format(SAVE_PATH)
 
     # get test data
-    x_test = get_organized_data(path_x_test_resampled)
+    x_test = get_organized_data(path_x_test_resampled, DIMENSIONS)
 
     # load U-Net
     model = load_model("{}{}U-Net.h5".format(SAVE_PATH, ORGAN))
@@ -157,7 +158,7 @@ def apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, ORGAN, THRESH):
     get_segmentation_masks(results, path_x_test_resampled, path_results_resampled, ORGAN, THRESH)
 
     # resample files to make them fit into the respective Bounding Box (??x??x??)
-    resample_files_reverse(path_results_resampled, path_results_cropped, RRF_BB_PATH, SCAN_PATH)
+    resample_files_reverse(path_results_resampled, path_results_cropped, RRF_BB_PATH, SCAN_PATH, ORGAN)
 
     # put area of interest back into original position
-    crop_files_reverse(path_results_cropped, path_results_orig, RRF_BB_PATH, SCAN_PATH)
+    crop_files_reverse(path_results_cropped, path_results_orig, RRF_BB_PATH, SCAN_PATH, ORGAN)

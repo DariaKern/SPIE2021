@@ -90,15 +90,15 @@ def plot_history(history):
     plt.show()
 
 
-def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50):
+def train(SAVE_PATH, ORGAN, val_split=0.1, batch_size=15, epochs=50):
     # get training data
     path_x_train_resampled = "{}Xtrain/resampled/".format(SAVE_PATH)
     path_y_train_resampled = "{}ytrain/resampled/".format(SAVE_PATH)
-    x_train = get_organized_data(path_x_train_resampled, DIMENSIONS)
-    y_train = get_organized_data(path_y_train_resampled, DIMENSIONS, True)
+    x_train = get_organized_data(path_x_train_resampled)
+    y_train = get_organized_data(path_y_train_resampled, True)
 
     # generate the U-Net model (Width, Height, Depth, Channels)
-    architecture = generate_U_Net(DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], DIMENSIONS[3])
+    architecture = generate_U_Net(64, 64, 64, 1)
 
     # train U-Net on training data and save it
     # set parameters for training and train the model

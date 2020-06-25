@@ -66,23 +66,23 @@ def calculate_mean(results):
     hd = []
     avg_hd = []
     dice = []
-    avg_ol = []
-    vs = []
+    #avg_ol = []
+    #vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
         dice.append((result[3]))
-        avg_ol.append(result[4])
-        vs.append(result[5])
+        #avg_ol.append(result[4])
+        #vs.append(result[5])
 
     # calculate mean of all metrics
     mean_hd = np.mean(hd)
     mean_avg_hd = np.mean(avg_hd)
     mean_dice = np.mean(dice)
-    mean_avg_ol = np.mean(avg_ol)
-    mean_vs = np.mean(vs)
+    #mean_avg_ol = np.mean(avg_ol)
+    #mean_vs = np.mean(vs)
 
-    mean = ["mean", mean_hd, mean_avg_hd, mean_dice, mean_avg_ol, mean_vs]
+    mean = ["mean", mean_hd, mean_avg_hd, mean_dice]
     return mean
 
 
@@ -91,29 +91,28 @@ def calculate_standard_dv(results):
     hd = []
     avg_hd = []
     dice = []
-    avg_ol = []
-    vs = []
+    #avg_ol = []
+    #vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
         dice.append((result[3]))
-        avg_ol.append(result[4])
-        vs.append(result[5])
+        #avg_ol.append(result[4])
+        #vs.append(result[5])
 
     # calculate std of all metrics
     std_hd = np.std(hd)
     std_avg_hd = np.std(avg_hd)
     std_dice = np.std(dice)
-    std_avg_ol = np.std(avg_ol)
-    std_vs = np.std(vs)
+    #std_avg_ol = np.std(avg_ol)
+    #std_vs = np.std(vs)
 
-    std = ["standard d", std_hd, std_avg_hd, std_dice, std_avg_ol, std_vs]
+    std = ["standard d", std_hd, std_avg_hd, std_dice]
     return std
 
 
 def evaluate_predictions(pred_path, gt_path):
     results = []
-    std = []
 
     dict_gt_paths = get_dict_of_paths(gt_path)
 
@@ -157,7 +156,7 @@ def evaluate(SAVE_PATH, ORGAN):
     # write metrics into excel
     number_of_results = len(results)
     number_of_metrics = len(results[0])
-    start_row = 2
+    start_row = 4
     start_col = 1
     for i in range(0, number_of_results):
         for j in range(0, number_of_metrics):
