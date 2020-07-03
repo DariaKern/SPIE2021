@@ -2,7 +2,7 @@ DIMENSIONS:
 
 Welche Dimensionen sind sinnvoll?
 Die gecroppten Bereiche sind meistens so 70-120 voxel groß
-96x96x96 wäre ja upsamplen
+96x96x96 wäre ja teilweise upsamplen
 64x64x64 wäre downsamplen
 
 

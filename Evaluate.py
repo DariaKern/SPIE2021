@@ -1,4 +1,4 @@
-from SharedMethods import get_dict_of_paths
+from SharedMethods import get_dict_of_paths, find_patient_no_in_file_name
 import SimpleITK as sitk
 import os
 import re
@@ -42,23 +42,6 @@ def calculate_hausdorff_distance(gt_img_path, pred_img_path):
     print("average hausdorff distance {}".format(avg_hd))
 
     return hd, avg_hd
-
-
-#TODO: takes only 1 image
-def calculate_danielsson_distance(gt_img_path, pred_img_path):
-    # load images
-    gt_img = sitk.ReadImage(gt_img_path)
-    pred_img = sitk.ReadImage(pred_img_path)
-
-    # calculate hausdorff
-    dd_filter = sitk.DanielssonDistanceMapImageFilter()
-    dd_filter.SetSquaredDistance(False)
-    dd_filter.Execute(gt_img, pred_img)
-    dd = dd_filter.GetSquaredDistance()
-
-    print("squared danielsson distance {}".format(dd))
-
-    return dd
 
 
 def calculate_mean(results):
@@ -111,6 +94,12 @@ def calculate_standard_dv(results):
     return std
 
 
+def calculate_x(gt_img_path, pred_img_path):
+    # load images
+    gt_img = sitk.ReadImage(gt_img_path)
+    pred_img = sitk.ReadImage(pred_img_path)
+
+
 def evaluate_predictions(pred_path, gt_path):
     results = []
 
@@ -118,16 +107,12 @@ def evaluate_predictions(pred_path, gt_path):
 
     # evaluate every prediction
     for prediction in os.scandir(pred_path):
-        # find patient number in file name
-        regex = re.compile(r'\d+')
-        patient_no = int(regex.search(prediction.name).group(0))
+        patient_no = find_patient_no_in_file_name(prediction.name)
         gt_img_path = dict_gt_paths[patient_no]
 
         print("Patient Number : {}".format(patient_no))
         hd, avg_hd = calculate_hausdorff_distance(gt_img_path, prediction.path)
         dice = calculate_label_overlap_measures(gt_img_path, prediction.path)
-        #danielsson = calculate_danielsson_distance(gt_img_path, prediction.path)
-
         print("")
 
         results.append([patient_no, hd, avg_hd, dice])

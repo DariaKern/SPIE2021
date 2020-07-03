@@ -6,7 +6,7 @@ from SharedMethods import get_bb_coordinates, resample_file, \
     get_dict_of_paths, nifti_image_affine_reader, bb_mm_to_vox
 from openpyxl.styles import Alignment, NamedStyle, Font
 from openpyxl import Workbook
-import os, re, random, shutil
+import os, random, shutil
 import SimpleITK as sitk
 import nibabel as nib
 

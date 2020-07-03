@@ -6,7 +6,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.utils import plot_model
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from SharedMethods import get_organized_data
 
 
@@ -102,13 +102,14 @@ def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50)
 
     # train U-Net on training data and save it
     # set parameters for training and train the model
+    tensorboard = TensorBoard(histogram_freq=1)
     earlystopper = EarlyStopping(patience=20, verbose=1)
     checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
     history = architecture.fit(x_train, y_train,
                         validation_split=val_split,
                         batch_size=batch_size,
                         epochs=epochs,
-                        callbacks=[earlystopper, checkpointer])
+                        callbacks=[earlystopper, checkpointer, tensorboard])
 
     # generate image with model architecture and show training history
     plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)
@@ -116,5 +117,3 @@ def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50)
 
     #INFO: save U-Net non needed for early stopping already saves the best model
     #model.save('{}U-Net.h5'.format(save_path))
-
-

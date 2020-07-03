@@ -12,8 +12,8 @@ from Evaluate import evaluate
 SCAN_PATH = "/Data/Daria/DATA/CT-Scans/"
 GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
 GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
-RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"
-#RRF_BB_PATH = "/Data/Daria/DATA/BB/"
+#RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"
+RRF_BB_PATH = "/Data/Daria/DATA/BB/"
 SAVE_PATH = "/Data/Daria/DATA/"
 
 # organ to segment (NEEDED)
@@ -27,10 +27,10 @@ SPLIT = 0.1
 
 # define threshold for segmentation mask
 # recommended thresh: 0.5, for pancreas: 0.3
-THRESH = 0.5
+THRESH = 0.0
 
 # Define input image size
-DIMENSIONS = [80, 80, 80, 1]
+DIMENSIONS = [96, 96, 96, 1]
 
 # define validation split  (Default = 0.1)
 # 0.00 (0%) - 1.00 (100%) percentage of validation files among Test files
@@ -40,7 +40,7 @@ VAL_SPLIT = 0.1
 BATCH = 5
 
 # define number of epochs (Default = 50)
-EPOCHS = 100
+EPOCHS = 10
 
 CUSTOM_TEST_SET = [6, 13, 15, 47, 22]
 #CUSTOM_TEST_SET = None
@@ -61,7 +61,6 @@ evaluate(SAVE_PATH, ORGAN)
 
 
 # TODO:
-"""t
-Eigenen Train und Test Split festlegen
+"""
 crop files reverse noch eine MEthode mit crop file reverse für einzelne Datei
 """

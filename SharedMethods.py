@@ -145,7 +145,6 @@ def create_paths(SAVE_PATH, name):
     return parent_path, path_cropped, path_resampled, path_orig
 
 
-# TODO: when creating VTK files bb Coordinates switch y and y2
 # read bounding box coordinates
 def get_bb_coordinates(box_path):
     # open vtk file and get coordinates
@@ -153,15 +152,15 @@ def get_bb_coordinates(box_path):
     lines = bb_file.readlines()
 
     # get coordinates
-    numbers1 = lines[5].split()
+    numbers1 = lines[6].split()
     x0 = float(numbers1[0])
-    y1 = float(numbers1[1])  # TODO
+    y0 = float(numbers1[1])
     z0 = float(numbers1[2])
 
     # get coordinates
-    numbers2 = lines[11].split()
+    numbers2 = lines[12].split()
     x1 = float(numbers2[0])
-    y0 = float(numbers2[1])  # TODO
+    y1 = float(numbers2[1])
     z1 = float(numbers2[2])
 
     # close file
