@@ -112,8 +112,7 @@ def get_dict_of_paths(path, organ=None):
     # (this isn't done in a organized way, files seem to be accessed rather randomly)
     for file in os.scandir(path):
         # find patient number in file name
-        regex = re.compile(r'\d+')
-        patient_no = int(regex.search(file.name).group(0))
+        patient_no = find_patient_no_in_file_name(file.name)
 
         if organ is not None:
             # write filepath (to file that contains the organ label) into dictionary with patient number as key
