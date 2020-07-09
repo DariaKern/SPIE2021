@@ -9,7 +9,7 @@ from Evaluate import evaluate
 '''_____________________________________________________________________________________________'''
 
 # Darias local standard paths (NEEDED)
-SCAN_PATH = "/Data/Daria/DATA/CT-Scans/"
+SCAN_PATH = "/Data/Daria/DATA/CT-SCANS/"
 GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
 GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
 #RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"

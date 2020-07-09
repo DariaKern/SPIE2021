@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import nibabel as nib
-from RRF_SharedMethods import find_patient_no_in_file_name
+from SharedMethods import find_patient_no_in_file_name
 
 
 # search non-zero values in array
@@ -157,6 +157,7 @@ def create_GT_BB(GT_SEG_PATH, GT_BB_PATH):
             z2 = (z2 * spacing_z) + qoffset_z
 
             # if negative spacing switch max and min
+
             if spacing_x < 0:
                 tempx = x1
                 x1 = x2
@@ -172,6 +173,11 @@ def create_GT_BB(GT_SEG_PATH, GT_BB_PATH):
                 z1 = z2
                 z2 = tempz
 
+
             file_name = "%s%s%s%s" % (patient_number, "_", organ, "_bb.vtk")
             file_path = "{}{}".format(GT_BB_PATH, file_name)
             write_into_box_file(file_path, x1, x2, y1, y2, z1, z2)
+
+
+def prepare(GT_SEG_PATH, GT_BB_PATH):
+    create_GT_BB(GT_SEG_PATH, GT_BB_PATH)
