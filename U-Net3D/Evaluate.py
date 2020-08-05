@@ -4,6 +4,9 @@ import os
 import re
 from openpyxl import load_workbook
 import numpy as np
+from openpyxl.styles import Alignment, NamedStyle, Font
+from openpyxl import Workbook
+import openpyxl as op
 
 
 # returns dice coefficent, mean overlap and volume similarity measurements
@@ -34,9 +37,14 @@ def calculate_hausdorff_distance(gt_img_path, pred_img_path):
 
     # calculate hausdorff
     hd_filter = sitk.HausdorffDistanceImageFilter()
-    hd_filter.Execute(gt_img, pred_img)
-    avg_hd = hd_filter.GetAverageHausdorffDistance()
-    hd = hd_filter.GetHausdorffDistance()
+    try:
+        hd_filter.Execute(gt_img, pred_img)
+        avg_hd = hd_filter.GetAverageHausdorffDistance()
+        hd = hd_filter.GetHausdorffDistance()
+    except RuntimeError:
+        # no segmentation mask would usually throw an error
+        avg_hd = 0
+        hd = 0
 
     print("hausdorff distance {}".format(hd))
     print("average hausdorff distance {}".format(avg_hd))
@@ -128,7 +136,8 @@ https://realpython.com/openpyxl-excel-spreadsheets-python/
 '''
 
 
-def evaluate(SAVE_PATH, ORGAN):
+def evaluate(SAVE_PATH, ORGAN, ROUND):
+
     # open excel sheet
     wb = load_workbook(filename="{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
     sheet = wb.active
@@ -167,4 +176,60 @@ def evaluate(SAVE_PATH, ORGAN):
         sheet.cell(column=col, row=mean_row, value=mean_value)
         sheet.cell(column=col, row=std_row, value=std_value)
 
-    wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
+    wb.save("{}eval/{}_Evaluation {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
+
+
+def summarize_eval(SAVE_PATH, ORGAN):
+    # create excel sheet
+    eval_wb = Workbook()
+    eval_sheet = eval_wb.active
+    eval_sheet.title = "summarize eval"
+
+    # create headings and apply style
+    headings_style = NamedStyle(
+        name="daria",
+        font=Font(color='000000', bold=True),
+        alignment=Alignment(horizontal='left')
+    )
+    headings_row = '1'
+    headings = ["file #", "mean dice coeff",
+                "standard d."]
+    eval_sheet.append(headings)
+    for cell in eval_sheet[headings_row]:
+        cell.style = headings_style
+
+    # make cells wider
+    eval_sheet.column_dimensions['A'].width = 50
+    eval_sheet.column_dimensions['B'].width = 20
+    eval_sheet.column_dimensions['C'].width = 20
+
+    mean_dice_row = 24
+    mean_standard_d_row = 25
+    relevant_col = 4
+
+    curr_row = 2
+    curr_col = 1
+
+    path = "{}eval/".format(SAVE_PATH)
+    for file in os.scandir(path):
+        found = file.name.find(ORGAN)
+        if found is not -1:
+            # open
+            wb_obj = op.load_workbook(file)
+            # get active sheet
+            sheet_obj = wb_obj.active
+            # read cell
+            cell_mean_dice = sheet_obj.cell(row=mean_dice_row, column=relevant_col)
+            cell_standard_d = sheet_obj.cell(row=mean_standard_d_row, column=relevant_col)
+            # get value
+            mean_dice = cell_mean_dice.value
+            standard_d = cell_standard_d.value
+
+            # write into evaluation summary sheet
+            eval_sheet.cell(column=curr_col, row=curr_row, value=file.name)  # name
+            eval_sheet.cell(column=curr_col+1, row=curr_row, value=mean_dice)
+            eval_sheet.cell(column=curr_col+2, row=curr_row, value=standard_d)
+
+            curr_row = curr_row+1
+
+    eval_wb.save("{}Evaluation Summary {}.xlsx".format(SAVE_PATH, ORGAN))

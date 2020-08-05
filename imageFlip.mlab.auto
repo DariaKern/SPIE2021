@@ -745,6 +745,219 @@ module vtkImageCast {
     status = "Input is Valid and Used"
   }
 }
+module itkImageFileReader {
+  internal  {
+    frame = "2205 1077 136 56"
+    moduleGroupName = ""
+    windows  {
+      window _default {
+        geometry = "45 212 314 429"
+        sizeHint = "314 429"
+        wasOpen = yes
+      }
+    }
+  }
+  fields  {
+    instanceName = itkImageFileReader
+    fileDataType = int16
+    autoDetermineDataType = FALSE
+    correctSubVoxelShift = TRUE
+    fileDimension = 3
+    info = "Loading okay."
+    numDims = 3
+    fileType = TypeNotApplicable
+    componentType = float
+    pixelType = SCALAR
+    loaderType = NiftiImageIO
+    outputMetaDataStr = "ITK_FileNotes : 
+aux_file : 
+bitpix : 32
+cal_max : 0
+cal_min : 0
+datatype : 16
+descrip : 
+dim[0] : 3
+dim[1] : 512
+dim[2] : 512
+dim[3] : 565
+dim[4] : 1
+dim[5] : 1
+dim[6] : 1
+dim[7] : 1
+dim_info : 
+intent_code : 0
+intent_name : 
+intent_p1 : 0
+intent_p2 : 0
+intent_p3 : 0
+pixdim[0] : 1
+pixdim[1] : 0.654297
+pixdim[2] : 0.654297
+pixdim[3] : 1
+pixdim[4] : 0
+pixdim[5] : 0
+pixdim[6] : 0
+pixdim[7] : 0
+qform_code : 1
+qoffset_x : -0
+qoffset_y : -0
+qoffset_z : 0
+quatern_b : 0
+quatern_c : 0
+quatern_d : 1
+scl_inter : 0
+scl_slope : 1
+sform_code : 1
+slice_code : 
+slice_duration : 0
+slice_end : 0
+slice_start : 0
+srow_x : -0.654297 0 0 -0
+srow_y : 0 -0.654297 0 -0
+srow_z : 0 0 1 0
+toffset : 0
+vox_offset : 352
+xyzt_units : 
+"
+    suppressErrorPosting = FALSE
+    unresolvedFileName = "$(HOME)/Desktop/Data/Daria/NORMALIZED DATA/ZERO ORIGIN, RAI ORIENTATION/CT-SCANS/48.nii.gz"
+  }
+}
+module itkImageFileWriter {
+  internal  {
+    frame = "2217 789 128 56"
+    moduleGroupName = ""
+    windows  {
+      window _default {
+        geometry = "516 203 348 412"
+        sizeHint = "283 412"
+        wasOpen = yes
+      }
+    }
+  }
+  fields  {
+    instanceName = itkImageFileWriter
+    useCompression = TRUE
+    correctSubVoxelShift = TRUE
+    forceDirectionCosineWrite = TRUE
+    outputVoxelType = Automatic
+    info = "File saved successfully"
+    unresolvedFileName = "$(HOME)/Desktop/Data/Daria/NORMALIZED DATA/Flipped and int16/48.nii.gz"
+  }
+}
+module itkFlipImageFilter {
+  internal  {
+    frame = "2217 933 128 56"
+    moduleGroupName = ""
+    windows  {
+      window _default {
+        geometry = "535 214 375 339"
+        sizeHint = "293 339"
+        wasOpen = no
+      }
+    }
+  }
+  fields  {
+    instanceName = itkFlipImageFilter
+    updateMode = AutoUpdate
+    applyMode = AutoApply
+    minValue = -1024
+    maxValue = 2976
+    applyMinMax = FALSE
+    autoSetMinMax = TRUE
+    clampOutImageValues = FALSE
+    lowerOutSideMode = MinValue
+    upperOutSideMode = MaxValue
+    lowerOutSideValue = 0
+    upperOutSideValue = 0
+    flipAxes = "0 1 0"
+    flipAboutOrigin = TRUE
+    coordinateTolerance = 1e-06
+    directionTolerance = 1e-06
+  }
+}
+module OrthoView2D {
+  internal  {
+    frame = "2373 981 120 56"
+    moduleGroupName = ""
+    windows  {
+      window _default {
+        geometry = "533 151 400 431"
+        sizeHint = "400 431"
+        wasOpen = yes
+      }
+    }
+  }
+  fields  {
+    instanceName = ORIG
+    inventorInputOn = TRUE
+    inventorOutputOn = FALSE
+    synchronizePosition = TRUE
+    layout = LAYOUT_CUBE_EQUAL
+    filterMode = FILTER_LINEAR
+    synchronizeZoom = TRUE
+    synchronizePanning = FALSE
+    useGlobalInputImage = TRUE
+    snapToCenter = FALSE
+    alternCubeLayout = FALSE
+    timePoint = 0
+    useManagedInteraction = FALSE
+    enableSlicing = TRUE
+    borderOn = TRUE
+    borderColor = "0.899999976158142 0.899999976158142 0.899999976158142"
+    grayWidth = 4000
+    grayCenter = 976
+    annotationOn = TRUE
+    annotationSizeMode = ANNO_SHOW_DETAILED
+    annotationFontSize = ANNO_SIZE_AUTO
+    valueHighPrecision = TRUE
+    annoCoords = Voxel
+    showCurrentPos = TRUE
+    worldPosition = "234 95.4285736083984 189"
+    coloredMode = FALSE
+  }
+}
+module OrthoView2D {
+  internal  {
+    frame = "2429 821 120 56"
+    moduleGroupName = ""
+    windows  {
+      window _default {
+        geometry = "933 151 400 431"
+        sizeHint = "400 431"
+        wasOpen = yes
+      }
+    }
+  }
+  fields  {
+    instanceName = FLIPPED
+    inventorInputOn = TRUE
+    inventorOutputOn = FALSE
+    synchronizePosition = TRUE
+    layout = LAYOUT_CUBE_EQUAL
+    filterMode = FILTER_LINEAR
+    synchronizeZoom = TRUE
+    synchronizePanning = FALSE
+    useGlobalInputImage = TRUE
+    snapToCenter = FALSE
+    alternCubeLayout = FALSE
+    timePoint = 0
+    useManagedInteraction = FALSE
+    enableSlicing = TRUE
+    borderOn = TRUE
+    borderColor = "0.899999976158142 0.899999976158142 0.899999976158142"
+    grayWidth = 4000
+    grayCenter = 976
+    annotationOn = TRUE
+    annotationSizeMode = ANNO_SHOW_DETAILED
+    annotationFontSize = ANNO_SIZE_AUTO
+    valueHighPrecision = TRUE
+    annoCoords = Voxel
+    showCurrentPos = TRUE
+    worldPosition = "168.80859375 175.514694213867 333.887756347656"
+    coloredMode = FALSE
+  }
+}
 connections  {
   vtkImageFlip.inputInformationInput_vtkImageData = MLToVTKImage.outputImage
   vtkImageFlip.inputInputData_vtkDataObject = MLToVTKImage.outputImage
@@ -766,5 +979,9 @@ connections  {
   vtkImageFlip3.inputInputData_vtkDataObject = vtkImageFlip2.outputImageFlip
   vtkMetaImageWriter1.inputInputData_vtkDataObject = vtkImageCast1.outputImageCast
   vtkImageCast1.inputInputData_vtkDataObject = vtkImageFlip2.outputImageFlip
+  itkImageFileWriter.input0 = itkFlipImageFilter.output0
+  itkFlipImageFilter.input0 = itkImageFileReader.output0
+  ORIG.image = itkImageFileReader.output0
+  FLIPPED.image = itkFlipImageFilter.output0
 }
 networkModel = ""

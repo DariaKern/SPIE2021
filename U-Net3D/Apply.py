@@ -15,7 +15,7 @@ def get_segmentation_mask(img_arr, organ, thresh):
     # get respective label for the given organ
     organ_label = get_organ_label(organ)
 
-    # create empty (only zeros) segmentation mask with same siza as result_img_arr
+    # create empty (only zeros) segmentation mask with same size as result_img_arr
     # should be 64,64,64
     result_img_arr = np.zeros((img_arr.shape[0],
                                img_arr.shape[1],
@@ -70,18 +70,18 @@ def resample_files_reverse(path, target_path, bb_folder_path, ref_files_folder_p
         # get vox coordinates of respective bb to calculate dimensions
         bb_path = bb_path_dict[patient_no]
         bb_coords = get_bb_coordinates(bb_path)
-        bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset)
+        bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset, ref_img)
 
         # get start and end position of bb in CT-Scan
         # width
-        x0_bb_coords_vox = int(bb_coords_vox[0])
-        x1_bb_coords_vox = int(bb_coords_vox[1])
+        x0_bb_coords_vox = int(abs(bb_coords_vox[0]))
+        x1_bb_coords_vox = int(abs(bb_coords_vox[1]))
         # height
-        y0_bb_coords_vox = int(bb_coords_vox[2])
-        y1_bb_coords_vox = int(bb_coords_vox[3])
+        y0_bb_coords_vox = int(abs(bb_coords_vox[2]))
+        y1_bb_coords_vox = int(abs(bb_coords_vox[3]))
         # depth
-        z0_bb_coords_vox = int(bb_coords_vox[4])
-        z1_bb_coords_vox = int(bb_coords_vox[5])
+        z0_bb_coords_vox = int(abs(bb_coords_vox[4]))
+        z1_bb_coords_vox = int(abs(bb_coords_vox[5]))
 
         # calculate dimensions of bb
         width = x1_bb_coords_vox - x0_bb_coords_vox
@@ -117,24 +117,28 @@ def crop_files_reverse(path, save_path, bb_folder_path, ref_files_folder_path, O
         # get vox coordinates of respective bb to calculate dimensions
         bb_path = bb_path_dict[patient_no]
         bb_coords = get_bb_coordinates(bb_path)
-        bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset)
+        bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset, ref_img)
 
         # load file to be reverse cropped (w, h, d)
-        img = nib.load(file.path)
-        img_arr = img.get_fdata()
-
+        img_to_crop = nib.load(file.path)
+        img_arr_to_crop = img_to_crop.get_fdata()
+        #print("result img array shape {}".format(result_img_arr.shape))
+        #print("bb shape {}".format(img_arr_to_crop.shape))
+        #print("bb coords vox {}".format(bb_coords_vox))
         # put the cut-out(cropped out area) back into its right position
-        for x in range(img_arr.shape[0]):
-            for y in range(img_arr.shape[1]):
-                for z in range(img_arr.shape[2]):
-                    if img_arr[x][y][z] > 0:
-                        width = x + int(bb_coords_vox[0])
-                        height = y + int(bb_coords_vox[2])
-                        depth = z + int(bb_coords_vox[4])
-                        result_img_arr[width, height, depth] = img_arr[x][y][z]
+        for x in range(img_arr_to_crop.shape[0]):
+            for y in range(img_arr_to_crop.shape[1]):
+                for z in range(img_arr_to_crop.shape[2]):
+                    if img_arr_to_crop[x][y][z] > 0:
+                        width = x + int(abs(bb_coords_vox[0]))
+                        height = y + int(abs(bb_coords_vox[2]))
+                        depth = z + int(abs(bb_coords_vox[4]))
+                        result_img_arr[width, height, depth] = img_arr_to_crop[x][y][z]
+
 
         # save cropped array as nifti file with patient number in name
-        result_img = nib.Nifti1Image(result_img_arr, ref_img.affine, ref_img.header)
+        ref_img.set_data_dtype(np.uint16)
+        result_img = nib.Nifti1Image(result_img_arr.astype(np.uint16), ref_img.affine, ref_img.header)
         nib.save(result_img, '{}{}.nii.gz'.format(save_path, patient_no))
 
     print("done. saved reverse cropped files to '{}'".format(save_path))

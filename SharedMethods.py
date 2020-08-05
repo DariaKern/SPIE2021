@@ -57,7 +57,7 @@ def mm_to_vox(coord_list, spacing, offset):
 
 
 # transform bounding coordinates from mm to vox
-def bb_mm_to_vox(bb_coords, spacing, offset):
+def bb_mm_to_vox(bb_coords, spacing, offset, img):
     # split coordinates into min and max coordinate values of bounding box
     bb_coords_min_mm = [bb_coords[0], bb_coords[2], bb_coords[4]]  # x1, y1, z1
     bb_coords_max_mm = [bb_coords[1], bb_coords[3], bb_coords[5]]  # x2, y2, z2
@@ -92,6 +92,20 @@ def bb_mm_to_vox(bb_coords, spacing, offset):
         temp_space_z = bb_coords_vox[4]
         bb_coords_vox[4] = bb_coords_vox[5]
         bb_coords_vox[5] = temp_space_z
+
+    # if predicted bb borders are outside of image coordinates...
+    if bb_coords_vox[0] < 0:
+        bb_coords_vox[0] = 0
+    if bb_coords_vox[1] > img.shape[0]:
+        bb_coords_vox[1] = img.shape[0]
+    if bb_coords_vox[2] < 0:
+        bb_coords_vox[2] = 0
+    if bb_coords_vox[3] > img.shape[1]:
+        bb_coords_vox[3] = img.shape[1]
+    if bb_coords_vox[4] < 0:
+        bb_coords_vox[4] = 0
+    if bb_coords_vox[5] > img.shape[2]:
+        bb_coords_vox[5] = img.shape[2]
 
     return bb_coords_vox
 

@@ -1,183 +1,68 @@
+import SimpleITK as sitk
+import vtk
 import os
-import numpy as np
-import nibabel as nib
-from SharedMethods import find_patient_no_in_file_name
+import SharedMethods as sm
 
 
-# search non-zero values in array
-def find_organ_min_max_bounds(organ, img_arr):
-        # Test whether any array element along a given axis evaluates to True.
-        x = np.any(img_arr==organ, axis=(1, 2))
-        y = np.any(img_arr==organ, axis=(0, 2))
-        z = np.any(img_arr==organ, axis=(0, 1))
+def create_gt_bb(GT_SEG_PATH, GT_BB_PATH):
+    print("creating Ground Truth Bounding Boxes from segmentations in '{}'".format(GT_SEG_PATH))
 
-        xmin, xmax = np.where(x)[0][[0, -1]]
-        ymin, ymax = np.where(y)[0][[0, -1]]
-        zmin, zmax = np.where(z)[0][[0, -1]]
-
-        return xmin, xmax, ymin, ymax, zmin, zmax
-
-
-def write_into_box_file(file_path, x1, x2, y1, y2, z1, z2):
-    boxfile = open(file_path, 'w')
-
-    boxfile.write('# vtk DataFile Version 2.0 \n')
-    boxfile.write('Cube example \n')
-    boxfile.write('ASCII \n')
-    boxfile.write('DATASET POLYDATA \n')
-    boxfile.write('POINTS 8 float \n')
-    boxfile.write(str(x1))
-    boxfile.write(' ')
-    boxfile.write(str(y2))
-    boxfile.write(' ')
-    boxfile.write(str(z1))
-    boxfile.write('\n')
-    boxfile.write(str(x1))
-    boxfile.write(' ')
-    boxfile.write(str(y1))
-    boxfile.write(' ')
-    boxfile.write(str(z1))
-    boxfile.write('\n')
-    boxfile.write(str(x2))
-    boxfile.write(' ')
-    boxfile.write(str(y1))
-    boxfile.write(' ')
-    boxfile.write(str(z1))
-    boxfile.write('\n')
-    boxfile.write(str(x2))
-    boxfile.write(' ')
-    boxfile.write(str(y2))
-    boxfile.write(' ')
-    boxfile.write(str(z1))
-    boxfile.write('\n')
-    boxfile.write(str(x1))
-    boxfile.write(' ')
-    boxfile.write(str(y2))
-    boxfile.write(' ')
-    boxfile.write(str(z2))
-    boxfile.write('\n')
-    boxfile.write(str(x1))
-    boxfile.write(' ')
-    boxfile.write(str(y1))
-    boxfile.write(' ')
-    boxfile.write(str(z2))
-    boxfile.write('\n')
-    boxfile.write(str(x2))
-    boxfile.write(' ')
-    boxfile.write(str(y1))
-    boxfile.write(' ')
-    boxfile.write(str(z2))
-    boxfile.write('\n')
-    boxfile.write(str(x2))
-    boxfile.write(' ')
-    boxfile.write(str(y2))
-    boxfile.write(' ')
-    boxfile.write(str(z2))
-    boxfile.write('\n')
-    boxfile.write('POLYGONS 6 30 \n')
-    boxfile.write('4 0 1 2 3 \n')
-    boxfile.write('4 4 5 6 7 \n')
-    boxfile.write('4 0 1 5 4 \n')
-    boxfile.write('4 2 3 7 6 \n')
-    boxfile.write('4 0 4 7 3 \n')
-    boxfile.write('4 1 2 6 5 \n')
-    boxfile.write('CELL_DATA 6 \n')
-    boxfile.write('SCALARS cell_scalars int 1 \n')
-    boxfile.write('LOOKUP_TABLE default \n')
-    boxfile.write('0 \n')
-    boxfile.write('1 \n')
-    boxfile.write('2 \n')
-    boxfile.write('3 \n')
-    boxfile.write('4 \n')
-    boxfile.write('5 \n')
-    boxfile.write('NORMALS cell_normals float \n')
-    boxfile.write('0 0 -1 \n')
-    boxfile.write('0 0 1 \n')
-    boxfile.write('0 -1 0 \n')
-    boxfile.write('0 1 0 \n')
-    boxfile.write('-1 0 0 \n')
-    boxfile.write('1 0 0 \n')
-    boxfile.write('FIELD FieldData 2 \n')
-    boxfile.write('cellIds 1 6 int \n')
-    boxfile.write('0 1 2 3 4 5 \n')
-    boxfile.write('faceAttributes 2 6 float \n')
-    boxfile.write('0.0 1.0 1.0 2.0 2.0 3.0 3.0 4.0 4.0 5.0 5.0 6.0 \n')
-    boxfile.write('POINT_DATA 8 \n')
-    boxfile.write('SCALARS sample_scalars float 1 \n')
-    boxfile.write('LOOKUP_TABLE my_table \n')
-    boxfile.write('0.0 \n')
-    boxfile.write('1.0 \n')
-    boxfile.write('2.0 \n')
-    boxfile.write('3.0 \n')
-    boxfile.write('4.0 \n')
-    boxfile.write('5.0 \n')
-    boxfile.write('6.0 \n')
-    boxfile.write('7.0 \n')
-    boxfile.write('LOOKUP_TABLE my_table 8 \n')
-    boxfile.write('0.0 0.0 0.0 1.0 \n')
-    boxfile.write('1.0 0.0 0.0 1.0 \n')
-    boxfile.write('0.0 1.0 0.0 1.0 \n')
-    boxfile.write('1.0 1.0 0.0 1.0 \n')
-    boxfile.write('0.0 0.0 1.0 1.0 \n')
-    boxfile.write('1.0 0.0 1.0 1.0 \n')
-    boxfile.write('0.0 1.0 1.0 1.0 \n')
-    boxfile.write('1.0 1.0 1.0 1.0 \n')
-
-    boxfile.close()
-
-
-def create_GT_BB(GT_SEG_PATH, GT_BB_PATH):
-    organs = [150, 156, 157, 160, 170]
-
+    count = 0
+    # get bb for every organ segmentation
     for file in os.scandir(GT_SEG_PATH):
-        # load Nifti format and save image in numpy array
-        img = nib.load(file)
-        img_arr = img.get_data()
-        img_hdr = img.header
+        patient = sm.find_patient_no_in_file_name(file.name)
+        # load original image
+        orig_img = sitk.ReadImage("{}{}".format(GT_SEG_PATH, file.name))
 
-        # get affine from header
-        spacing_x = img.affine[0][0]
-        spacing_y = img.affine[1][1]
-        spacing_z = img.affine[2][2]
-        qoffset_x = img.affine[0][3]
-        qoffset_y = img.affine[1][3]
-        qoffset_z = img.affine[2][3]
+        for organ in [150, 156, 157, 160, 170]:
+            # get start index and size of organ
+            lsi_filter = sitk.LabelShapeStatisticsImageFilter()
+            lsi_filter.SetComputeOrientedBoundingBox(True)
+            lsi_filter.Execute(orig_img)
+            bb = lsi_filter.GetBoundingBox(organ)  # x1, y1, z1, w, h, d
+            bb_orig = lsi_filter.GetOrientedBoundingBoxOrigin(organ)
+            bb_dir = lsi_filter.GetOrientedBoundingBoxDirection(organ)
+            bb_vertices = lsi_filter.GetOrientedBoundingBoxVertices(organ)
+            bb_size = lsi_filter.GetOrientedBoundingBoxSize(organ)
 
-        patient_number = find_patient_no_in_file_name(file.name)
+            # define for index slicing
+            x_min = bb[0]-1
+            x_max = bb[0] + bb[3]
+            y_min = bb[1]-1
+            y_max = bb[1] + bb[4]
+            z_min = bb[2]-1
+            z_max = bb[2] + bb[5]
 
-        # for every organ (liver, kidneys, pancreas, spleen)
-        for organ in organs:
-            x1, x2, y1, y2, z1, z2 = find_organ_min_max_bounds(organ, img_arr)
+            # transform points to physical space
+            p_min = orig_img.TransformIndexToPhysicalPoint((x_min, y_min, z_min))
+            p_max = orig_img.TransformIndexToPhysicalPoint((x_max, y_max, z_max))
 
-            x1 = (x1 * spacing_x) + qoffset_x
-            x2 = (x2 * spacing_x) + qoffset_x
-            y1 = (y1 * spacing_y) + qoffset_y
-            y2 = (y2 * spacing_y) + qoffset_y
-            z1 = (z1 * spacing_z) + qoffset_z
-            z2 = (z2 * spacing_z) + qoffset_z
+            '''
+            NOTE: Nifti changes direction  ( 1,0,0   to    (-1,  0,  0
+                                             0,1,0,          0, -1,  0      
+                                             0,0,1 )         0,  0,  1
+            
+            that's why x and y have to be inverted when saving it to a VTK file
+            '''
+            bounds = [-p_max[0], -p_min[0], -p_max[1], -p_min[1], p_min[2], p_max[2]]
 
-            # if negative spacing switch max and min
+            # define bb as cube
+            vtk_cube = vtk.vtkCubeSource()
+            vtk_cube.SetBounds(bounds)
+            vtk_cube.Update()
+            output = vtk_cube.GetOutput()
 
-            if spacing_x < 0:
-                tempx = x1
-                x1 = x2
-                x2 = tempx
+            # save bounding box object to file
+            bb_name = "{}_{}_bb.vtk".format(patient, organ)
+            save_path = "{}{}".format(GT_BB_PATH, bb_name)
+            writer = vtk.vtkPolyDataWriter()
+            writer.SetInputData(output)
+            writer.SetFileName(save_path)
+            writer.Update()
 
-            if spacing_y < 0:
-                tempy = y1
-                y1 = y2
-                y2 = tempy
-
-            if spacing_z < 0:
-                tempz = z1
-                z1 = z2
-                z2 = tempz
-
-
-            file_name = "%s%s%s%s" % (patient_number, "_", organ, "_bb.vtk")
-            file_path = "{}{}".format(GT_BB_PATH, file_name)
-            write_into_box_file(file_path, x1, x2, y1, y2, z1, z2)
+    print("count {}".format(count))
+    print("done. saved Ground Truth Bounding Boxes to '{}'".format(GT_BB_PATH))
 
 
 def prepare(GT_SEG_PATH, GT_BB_PATH):
-    create_GT_BB(GT_SEG_PATH, GT_BB_PATH)
+    create_gt_bb(GT_SEG_PATH, GT_BB_PATH)

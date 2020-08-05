@@ -9,6 +9,7 @@ from openpyxl import Workbook
 import os, random, shutil
 import SimpleITK as sitk
 import nibabel as nib
+import numpy as np
 
 
 # crops out the bounding box volume of the given CT-image or segmentation
@@ -19,9 +20,11 @@ def crop_out_bb(img, box_path):
     # get bounding box coordinates
     bb_coords = get_bb_coordinates(box_path)
 
+
     # convert bounding box coordinates to voxel
     spacing, offset = nifti_image_affine_reader(img)
-    bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset)
+    bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset, img)
+
 
     # width
     x0 = int(bb_coords_vox[0])
@@ -34,7 +37,7 @@ def crop_out_bb(img, box_path):
     z1 = int(bb_coords_vox[5])
 
     # cut out bounding box of image
-    result_img_arr = img_arr[x0:x1, y0:y1, z0:z1]
+    result_img_arr = img_arr[abs(x0):abs(x1), abs(y0):abs(y1), abs(z0):abs(z1)]
 
     return result_img_arr
 
@@ -66,6 +69,7 @@ def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number
 
             # save cropped array as nifti file with patient number in name
             result_img = nib.Nifti1Image(result_img_arr, img.affine, img.header)
+
             nib.save(result_img, '{}{}.nii.gz'.format(target_folder_path, "{}".format(patient_number)))
 
     print("done. saved cropped files to '{}'".format(target_folder_path))
@@ -114,24 +118,19 @@ def split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET=None):
     train_split_size = int(amount_patients - test_split_size)
     print("splitting {} files into {} TRAIN and {} TEST files".format(amount_patients, train_split_size, test_split_size))
 
-
     return test_split, train_split
 
 
+
 def filter_out_relevant_segmentation(folder_path, target_folder_path, ORGAN):
+    print("filtering out relevant segmentation in {}".format(folder_path))
     organ_label = get_organ_label(ORGAN)
 
-    print("filtering out relevant segmentation in {}".format(folder_path))
     for file in os.scandir(folder_path):
-        # load file, convert to array and filter out segmentation
-        img = nib.load(file)
-        result_img_arr = img.get_fdata()
-        result_img_arr[result_img_arr < organ_label] = 0
-        result_img_arr[result_img_arr > organ_label] = 0
-
-        # save cropped array as nifti file with patient number in name
-        result_img = nib.Nifti1Image(result_img_arr, img.affine, img.header)
-        nib.save(result_img, '{}{}'.format(target_folder_path, file.name))
+        # load file and filter out segmentation
+        orig_img = sitk.ReadImage(file.path)
+        result_img = sitk.Mask(orig_img, sitk.Equal(organ_label, orig_img))  # procedural API of SimpleITK
+        sitk.WriteImage(result_img, "{}{}".format(target_folder_path, file.name))
 
     print("done. saved filtered files to '{}'".format(target_folder_path))
 
@@ -187,6 +186,7 @@ def create_y_test(GT_SEG_PATH, SAVE_PATH, ORGAN, test_split):
 
     # filter out relevant segmentation
     filter_out_relevant_segmentation(path_y_test_orig, path_y_test_orig, ORGAN)
+    #filter_out_relevant_segmentation_old(path_y_test_orig, path_y_test_orig, ORGAN)
 
 
 def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split):
@@ -217,7 +217,7 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split):
     headings_row = '3'
     headings = ["patient #", "hausdorff dist",
                 "Ø hausdorff dist",
-                "dice coeff","dannielsson distance"]
+                "dice coeff","-"]
     sheet.append(headings)
     for cell in sheet[headings_row]:
         cell.style = headings_style
@@ -245,3 +245,21 @@ def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIO
     create_y_test(GT_SEG_PATH, SAVE_PATH, ORGAN, test_split)
 
 
+'''
+def filter_out_relevant_segmentation_old(folder_path, target_folder_path, ORGAN):
+    organ_label = get_organ_label(ORGAN)
+
+    print("filtering out relevant segmentation in {}".format(folder_path))
+    for file in os.scandir(folder_path):
+        # load file, convert to array and filter out segmentation
+        img = nib.load(file)
+        result_img_arr = img.get_fdata()
+        result_img_arr[result_img_arr < organ_label] = 0
+        result_img_arr[result_img_arr > organ_label] = 0
+
+        # save cropped array as nifti file with patient number in name
+        result_img = nib.Nifti1Image(result_img_arr, img.affine, img.header)
+        nib.save(result_img, '{}{}'.format(target_folder_path, file.name))
+
+    print("done. saved filtered files to '{}'".format(target_folder_path))
+'''
