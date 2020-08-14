@@ -250,7 +250,7 @@ def get_organized_data(path, DIMENSIONS, isSegmentation=False):
     if isSegmentation:
         data = np.zeros((number_of_files, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], DIMENSIONS[3]), dtype=np.bool)  # define y array
     else:
-        data = np.zeros((number_of_files, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], DIMENSIONS[3]), dtype=np.uint8)  # define X array
+        data = np.zeros((number_of_files, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], DIMENSIONS[3]), dtype=np.uint16)  # define X array
 
     # load files and transform into arrays (Width, Height, Depth, Channels) and put in data (array of arrays)
     index = 0  # keep extra index in case patients skip a number
