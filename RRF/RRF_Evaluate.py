@@ -1,7 +1,7 @@
 from openpyxl.styles import Alignment, NamedStyle, Font
 from openpyxl import Workbook, load_workbook
 import numpy
-from SharedMethods import get_dict_of_paths, get_bb_coordinates
+from DATA.SharedMethods_old import get_dict_of_paths, get_bb_coordinates
 
 
 def get_bb_differences(gt_bb_dict, bb_dict):

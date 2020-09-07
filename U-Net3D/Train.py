@@ -7,7 +7,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.utils import plot_model
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
+from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint
 from SharedMethods import get_organized_data
 import shutil
 

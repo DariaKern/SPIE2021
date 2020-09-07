@@ -9,24 +9,26 @@ from Evaluate import evaluate, summarize_eval
 '''_____________________________________________________________________________________________'''
 
 # Darias local standard paths (NEEDED)
+'''
 SCAN_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/CT-SCANS/"
 GT_SEG_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/GT-SEG"
 GT_BB_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/GT-BB/"
 RRF_BB_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/BB/"
 SAVE_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/"
+'''
 
-#SCAN_PATH = "/Data/Daria/DATA/CT-SCANS/"
-#GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
-#GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
-#RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"
+SCAN_PATH = "/Data/Daria/DATA/CT-SCANS/"
+GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
+GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
+RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"
 #RRF_BB_PATH = "/Data/Daria/DATA/BB/"
-#SAVE_PATH = "/Data/Daria/DATA/"
+SAVE_PATH = "/Data/Daria/DATA/"
 
 
 # organ to segment (NEEDED)
 # INFO: DELETE X train, X, test, y train and y test before switching to another organ
 # choose from 'liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas'
-ORGAN = "pancreas"
+ORGAN = "liver"
 
 # define train-test split (NEEDED)
 # 0.00 (0%) - 1.00 (100%) percentage of test files among All files
@@ -50,6 +52,7 @@ BATCH = 5
 EPOCHS = 50
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
+CUSTOM_TEST_SET = [7]
 #CUSTOM_TEST_SET = None
 
 '''_____________________________________________________________________________________________'''
@@ -65,10 +68,18 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''|................................METHODS....................................|'''
 '''_____________________________________________________________________________________________'''
 
+#prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET)
+#train(SAVE_PATH, DIMENSIONS, ORGAN, VAL_SPLIT, BATCH, EPOCHS)
+apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH)
+
+
+
+
+
 
 def run_x_times(times):
     for x in range(0, times):
-        number = x + 64
+        number = x + 77
         #test_set = [1,7,8,9,12,13,15,16,17,25,26,28,29,31,33,35,41,44,45,46]
         test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT)
         print(test_set)
@@ -84,7 +95,9 @@ def run_x_times(times):
             evaluate(SAVE_PATH, organ, number)
 
 
-for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
-    summarize_eval(SAVE_PATH, organ)
+
+
+#for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
+ #   summarize_eval(SAVE_PATH, organ)
 #run_x_times(100)
 

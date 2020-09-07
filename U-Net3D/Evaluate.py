@@ -1,7 +1,6 @@
 from SharedMethods import get_dict_of_paths, find_patient_no_in_file_name
 import SimpleITK as sitk
 import os
-import re
 from openpyxl import load_workbook
 import numpy as np
 from openpyxl.styles import Alignment, NamedStyle, Font

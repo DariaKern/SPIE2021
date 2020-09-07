@@ -1,10 +1,12 @@
 from tensorflow.keras.models import load_model
-from SharedMethods import create_paths, \
+from DATA.SharedMethods_old import create_paths, \
     get_organized_data, get_organ_label, \
     get_dict_of_paths, find_patient_no_in_file_name, \
-    resample_file, get_bb_coordinates
+    resample_file, nifti_image_affine_reader, get_bb_coordinates, \
+    bb_mm_to_vox
 import os
 import SimpleITK as sitk
+import nibabel as nib
 import numpy as np
 
 
@@ -19,21 +21,15 @@ def get_segmentation_mask(img_arr, organ, thresh):
                                img_arr.shape[1],
                                img_arr.shape[2]))
 
-    min_val =9999
-    max_val= 0
-
     # loop over every voxel and create segmentation mask
     for x in range(img_arr.shape[0]):
         for y in range(img_arr.shape[1]):
             for z in range(img_arr.shape[2]):
-                # todo: remove later
-                if img_arr[x][y][z][0] > max_val: max_val = img_arr[x][y][z][0]
-                if img_arr[x][y][z][0] < min_val: min_val = img_arr[x][y][z][0]
                 # values > thresh will be labeled as segmentation mask
                 # result_img_arr should have shape 64,64,64,1
                 if img_arr[x][y][z][0] > thresh:
                     result_img_arr[x, y, z] = organ_label
-    print("min: {}, max: {}".format(min_val, max_val))
+
     return result_img_arr
 
 
@@ -41,7 +37,6 @@ def get_segmentation_masks(results, path_ref_files, target_path, organ, threshol
     dict_ref_file_paths = get_dict_of_paths(path_ref_files)
 
     print("get segmentation masks")
-    # loop through output of the neural network
     for i in range(0, len(results)):
         result = results[i]
 
@@ -51,37 +46,57 @@ def get_segmentation_masks(results, path_ref_files, target_path, organ, threshol
 
         # check voxel values against treshold and get segmentationmask
         result_img_arr = get_segmentation_mask(result, organ, threshold)
-        result_img = sitk.GetImageFromArray(result_img_arr)
 
         # save cropped array as nifti file with patient number in name
-        #result_img.SetSpacing((2.0, 2.0, 2.0))
-        sitk.WriteImage(result_img, '{}seg{}.nii.gz'.format(target_path, curr_key))
+        ref_file = nib.load(curr_file_path)    # reference file
+        result_img = nib.Nifti1Image(result_img_arr, ref_file.affine, ref_file.header)
+        nib.save(result_img, '{}seg{}.nii.gz'.format(target_path, curr_key))
 
 
-def resample_files_reverse(path, target_path, bb_folder_path, ORGAN):
+def resample_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path, ORGAN):
     # organize bb and reference files by patient number in dictionary
     bb_path_dict = get_dict_of_paths(bb_folder_path, ORGAN)
-    ref_files_folder_path = "/home/daria/Desktop/Data/Daria/DATA/Xtest/cropped/"
     ref_files_path_dict = get_dict_of_paths(ref_files_folder_path)
 
     print("reverse resampling files in '{}'".format(path))
     for file in os.scandir(path):
         patient_no = find_patient_no_in_file_name(file.name)
 
-        # load respective cropped CT-Scan as reference and get size
+        # load respective original CT-Scan as reference and get some info
         ref_img_path = ref_files_path_dict[patient_no]
-        ref_img = sitk.ReadImage(ref_img_path)
-        target_dim = ref_img.GetSize()
+        ref_img = nib.load(ref_img_path)
+        spacing, offset = nifti_image_affine_reader(ref_img)
+
+        # get vox coordinates of respective bb to calculate dimensions
+        bb_path = bb_path_dict[patient_no]
+        bb_coords = get_bb_coordinates(bb_path)
+        bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset, ref_img)
+
+        # get start and end position of bb in CT-Scan
+        # width
+        x0_bb_coords_vox = int(abs(bb_coords_vox[0]))
+        x1_bb_coords_vox = int(abs(bb_coords_vox[1]))
+        # height
+        y0_bb_coords_vox = int(abs(bb_coords_vox[2]))
+        y1_bb_coords_vox = int(abs(bb_coords_vox[3]))
+        # depth
+        z0_bb_coords_vox = int(abs(bb_coords_vox[4]))
+        z1_bb_coords_vox = int(abs(bb_coords_vox[5]))
+
+        # calculate dimensions of bb
+        width = x1_bb_coords_vox - x0_bb_coords_vox
+        height = y1_bb_coords_vox - y0_bb_coords_vox
+        depth = z1_bb_coords_vox - z0_bb_coords_vox
 
         # resample to original cut-out size (Depth, Height, Width)
         img = sitk.ReadImage(file.path)
-        result_img = resample_file(img, target_dim[0], target_dim[1], target_dim[2])
+        result_img = resample_file(img, depth, height, width)
         sitk.WriteImage(result_img, "{}{}".format(target_path, file.name))
 
     print("done. saved reverse resampled files to '{}'".format(target_path))
 
 
-def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path, ORGAN):
+def crop_files_reverse(path, save_path, bb_folder_path, ref_files_folder_path, ORGAN):
     # organize bb and reference files by patient number in dictionary
     bb_path_dict = get_dict_of_paths(bb_folder_path, ORGAN)
     ref_files_path_dict = get_dict_of_paths(ref_files_folder_path)
@@ -92,53 +107,41 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
 
         # load respective original CT-Scan as reference, get some info and create new array of same size
         ref_img_path = ref_files_path_dict[patient_no]
-        ref_img = sitk.ReadImage(ref_img_path)
-        ref_img_arr = sitk.GetArrayFromImage(ref_img)
-
+        ref_img = nib.load(ref_img_path)
+        spacing, offset = nifti_image_affine_reader(ref_img)
+        ref_img_arr = ref_img.get_fdata()
         result_img_arr = np.zeros((ref_img_arr.shape[0],
                                    ref_img_arr.shape[1],
                                    ref_img_arr.shape[2]))
 
-        # load file that has to be put back into its original position (reverse cropped)
-        img = sitk.ReadImage(file.path)
-        img_arr = sitk.GetArrayFromImage(img)
+        # get vox coordinates of respective bb to calculate dimensions
+        bb_path = bb_path_dict[patient_no]
+        bb_coords = get_bb_coordinates(bb_path)
+        bb_coords_vox = bb_mm_to_vox(bb_coords, spacing, offset, ref_img)
 
-        # read bb and coordinates
-        box_path = bb_path_dict[patient_no]
-        x_min, x_max, y_min, y_max, z_min, z_max = get_bb_coordinates(box_path)
-
-        # transform physical space to index points
-        p_min = ref_img.TransformPhysicalPointToIndex((x_min, y_min, z_min))
-        p_max = ref_img.TransformPhysicalPointToIndex((x_max, y_max, z_max))
-
-        # x and y are negative because of nifti file orientation -x, -y, x
-        # -> swap min and max and multiply by -1 to make positive
-        # alson substract 1 from all max...only god knows why
-        x_min = (p_max[0] - 1) * -1
-        x_max = (p_min[0]) * -1
-        y_min = (p_max[1] - 1) * -1
-        y_max = (p_min[1]) * -1
-        z_min = p_min[2]
-        z_max = p_max[2] - 1
-
-        # 220, 150, 350
-        # z, y, x
-        print(ref_img_arr.shape)
-        print(result_img_arr.shape)
-        print(x_min, x_max, y_min, y_max, z_min, z_max)
-
+        # load file to be reverse cropped (w, h, d)
+        img_to_crop = nib.load(file.path)
+        img_arr_to_crop = img_to_crop.get_fdata()
+        #print("result img array shape {}".format(result_img_arr.shape))
+        #print("bb shape {}".format(img_arr_to_crop.shape))
+        #print("bb coords vox {}".format(bb_coords_vox))
         # put the cut-out(cropped out area) back into its right position
-        for x in range(x_min, x_max):
-            for y in range(y_min, y_max):
-                for z in range(z_min, z_max):
-                    result_img_arr[z][y][x] = img_arr[x-x_min][y-y_min][z-z_min]
+        for x in range(img_arr_to_crop.shape[0]):
+            for y in range(img_arr_to_crop.shape[1]):
+                for z in range(img_arr_to_crop.shape[2]):
+                    if img_arr_to_crop[x][y][z] > 0:
+                        width = x + int(abs(bb_coords_vox[0]))
+                        height = y + int(abs(bb_coords_vox[2]))
+                        depth = z + int(abs(bb_coords_vox[4]))
+                        result_img_arr[width, height, depth] = img_arr_to_crop[x][y][z]
 
-        # save nifti file with patient number in name
-        result_img = sitk.GetImageFromArray(result_img_arr)
-        result_img.SetSpacing((2.0, 2.0, 2.0))
-        sitk.WriteImage(result_img, "{}{}".format(target_path, file.name))
 
-    print("done. saved reverse cropped files to '{}'".format(target_path))
+        # save cropped array as nifti file with patient number in name
+        ref_img.set_data_dtype(np.uint16)
+        result_img = nib.Nifti1Image(result_img_arr.astype(np.uint16), ref_img.affine, ref_img.header)
+        nib.save(result_img, '{}{}.nii.gz'.format(save_path, patient_no))
+
+    print("done. saved reverse cropped files to '{}'".format(save_path))
 
 
 def apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH):
@@ -149,15 +152,17 @@ def apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH):
     # get test data
     x_test = get_organized_data(path_x_test_resampled, DIMENSIONS)
 
-    # load and apply U-Net on test data and get results in format Width, Height, Depth, Channels
+    # load U-Net
     model = load_model("{}{}U-Net.h5".format(SAVE_PATH, ORGAN))
+
+    # apply U-Net on test data and get results in format Width, Height, Depth, Channels
     results = model.predict(x_test, verbose=1)
 
     # generate segmentation masks from results
     get_segmentation_masks(results, path_x_test_resampled, path_results_resampled, ORGAN, THRESH)
 
     # resample files to make them fit into the respective Bounding Box (??x??x??)
-    resample_files_reverse(path_results_resampled, path_results_cropped, RRF_BB_PATH, ORGAN)
+    resample_files_reverse(path_results_resampled, path_results_cropped, RRF_BB_PATH, SCAN_PATH, ORGAN)
 
     # put area of interest back into original position
     crop_files_reverse(path_results_cropped, path_results_orig, RRF_BB_PATH, SCAN_PATH, ORGAN)
