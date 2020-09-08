@@ -1,5 +1,5 @@
 
-from DATA.SharedMethods_old import get_bb_coordinates, resample_file, \
+from _old.SharedMethods_old import get_bb_coordinates, resample_file, \
     create_paths, get_organ_label, find_patient_no_in_file_name, \
     get_dict_of_paths, nifti_image_affine_reader, bb_mm_to_vox
 from openpyxl.styles import Alignment, NamedStyle, Font

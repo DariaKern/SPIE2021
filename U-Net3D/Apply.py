@@ -121,14 +121,6 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
         z_min = p_min[2]
         z_max = p_max[2] - 1
 
-        '''
-        # put the cut-out(cropped out area) back into its right position
-        for z in range(z_min, z_max):
-            for y in range(y_min, y_max):
-                for x in range(x_min, x_max):
-                    result_img_arr[z][y][x] = img_arr[x-x_min][y-y_min][z-z_min]
-        '''
-
         # put the cut-out(cropped out area) back into its right position
         z_length = img_arr.shape[2]
         y_length = img_arr.shape[1]
@@ -138,11 +130,6 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
                 for z in range(z_length):
                     result_img_arr[z_min + x][y_min + y][x_min + z] = img_arr[x][y][z]
 
-
-        # array in shape z,y,x, bb in shape x,y,z?
-        print("result img array ", result_img_arr.shape)
-        print("img array ", img_arr.shape)
-        print(x_min, x_max, y_min, y_max, z_min, z_max)
         # save nifti file with patient number in name
         result_img = sitk.GetImageFromArray(result_img_arr)
         result_img.SetSpacing((2,2,2))

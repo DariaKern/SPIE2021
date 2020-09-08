@@ -1,5 +1,5 @@
 from tensorflow.keras.models import load_model
-from DATA.SharedMethods_old import create_paths, \
+from _old.SharedMethods_old import create_paths, \
     get_organized_data, get_organ_label, \
     get_dict_of_paths, find_patient_no_in_file_name, \
     resample_file, nifti_image_affine_reader, get_bb_coordinates, \

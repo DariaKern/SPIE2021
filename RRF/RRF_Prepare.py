@@ -1,7 +1,7 @@
 import SimpleITK as sitk
 import vtk
 import os
-from DATA import SharedMethods_old as sm
+from _old import SharedMethods_old as sm
 
 
 def create_gt_bb(GT_SEG_PATH, GT_BB_PATH):
