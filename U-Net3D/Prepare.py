@@ -151,6 +151,7 @@ def crop_out_bbs(folder_path, bb_folder_path, target_folder_path, patient_number
                 result_img = sitk.Mask(result_img, sitk.Equal(organ_label, result_img))  # procedural API of SimpleITK
 
             # save cropped file with patient number in name
+            result_img.SetOrigin((0,0,0))
             sitk.WriteImage(result_img, "{}{}".format(target_folder_path, file.name))
 
     print("done. saved cropped files to '{}'".format(target_folder_path))
@@ -206,7 +207,7 @@ def create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORG
     resample_files(path_x_test_cropped, path_x_test_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
-def create_y_test(GT_SEG_PATH, SAVE_PATH, ORGAN, test_split):
+def create_y_test(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN):
     print("")
     print("CREATING Y TEST")
     path_y_test, path_y_test_cropped, path_y_test_resampled, path_y_test_orig = create_paths(SAVE_PATH, "ytest")
@@ -214,6 +215,12 @@ def create_y_test(GT_SEG_PATH, SAVE_PATH, ORGAN, test_split):
 
     # filter out relevant segmentation
     filter_out_relevant_segmentations(path_y_test_orig, path_y_test_orig, ORGAN)
+
+    # crop GT BBs out of GT SEGs
+    crop_out_bbs(GT_SEG_PATH, GT_BB_PATH, path_y_test_cropped, test_split, ORGAN, isSegmentation=True)
+
+    # resample cropped out area
+    resample_files(path_y_test_cropped, path_y_test_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
 def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET=None):
@@ -225,4 +232,4 @@ def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIO
     create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)
     create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)
     create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN)
-    create_y_test(GT_SEG_PATH, SAVE_PATH, ORGAN, test_split)
+    create_y_test(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN)

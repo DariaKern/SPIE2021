@@ -18,6 +18,7 @@ def find_patient_no_in_file_name(file_name):
 
     return patient_no
 
+
 # given the name of an organ it returns the organs label number
 def get_organ_label(organ):
     # define dictionary (to simulate switch-case)
@@ -119,11 +120,11 @@ def resample_file(sitk_img, target_img_depth, target_img_height, target_img_widt
     resampler.SetReferenceImage(sitk_img)
     # resampler.SetOutputOrigin([0, 0, 0])  # start of coordinate system of new image
 
-    #TODO: hier wird das Bild irgendwie komisch. MAkle sure spacing is 2,2,2 when feeding it to the network but also make sure the image looks alright
     resampler.SetOutputSpacing(new_spacing)  # spacing (voxel size) of new image
     resampler.SetInterpolator(sitk.sitkNearestNeighbor)
     resampler.SetSize((target_img_width, target_img_height, target_img_depth))  # size of new image
     result_img = resampler.Execute(sitk_img)  # apply filter object on old image
+    result_img.SetSpacing((2,2,2))
 
     return result_img
 

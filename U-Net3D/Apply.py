@@ -32,7 +32,7 @@ def get_segmentation_mask(img_arr, organ, thresh):
                 # values > thresh will be labeled as segmentation mask
                 # result_img_arr should have shape 64,64,64,1
                 if img_arr[x][y][z][0] > thresh:
-                    result_img_arr[x, y, z] = organ_label
+                    result_img_arr[z, y, x] = organ_label
     print("min: {}, max: {}".format(min_val, max_val))
     return result_img_arr
 
@@ -54,7 +54,7 @@ def get_segmentation_masks(results, path_ref_files, target_path, organ, threshol
         result_img = sitk.GetImageFromArray(result_img_arr)
 
         # save cropped array as nifti file with patient number in name
-        #result_img.SetSpacing((2.0, 2.0, 2.0))
+        result_img.SetSpacing((2.0, 2.0, 2.0))
         sitk.WriteImage(result_img, '{}seg{}.nii.gz'.format(target_path, curr_key))
 
 
@@ -135,7 +135,7 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
 
         # save nifti file with patient number in name
         result_img = sitk.GetImageFromArray(result_img_arr)
-        result_img.SetSpacing((2.0, 2.0, 2.0))
+        result_img.SetSpacing((2,2,2))
         sitk.WriteImage(result_img, "{}{}".format(target_path, file.name))
 
     print("done. saved reverse cropped files to '{}'".format(target_path))
