@@ -5,6 +5,7 @@ import nibabel as nib
 import numpy as np
 import os
 import shutil
+import vtk
 #--------------------------------------------------------------------------
 
 # loads a Nifti image using Nibabel
@@ -42,24 +43,14 @@ def nifti_image_affine_reader(img):
 # returns coordinates
 #@autojit
 def bounding_box_reader(bb, bb_counter):
-    boxfile = open(bb[bb_counter], 'r')
-    lines = boxfile.readlines()
-    numbers1 = lines[5].split()
-    zmin = numbers1[2]
-    zmin = float(zmin)
-    y2 = numbers1[1]
-    y2 = float(y2)
-    x = numbers1[0]
-    x = float(x)
-    numbers2 = lines[11].split()
-    zmax = numbers2[2]
-    zmax = float(zmax)
-    y = numbers2[1]
-    y = float(y)
-    x2 = numbers2[0]
-    x2 = float(x2)
-    boxfile.close()
-    return x, y, zmin, x2, y2, zmax
+    #TODO DARIA read VTK file
+
+    reader = vtk.vtkPolyDataReader()
+    reader.SetFileName(bb[bb_counter])
+    reader.Update()
+    box = reader.GetOutput()
+    x_min, x_max, y_min, y_max, z_min, z_max = box.GetBounds()
+    return x_min, y_min, z_min, x_max, y_max, z_max
 
 
 #------------------------------------------------------------------------------
@@ -68,8 +59,8 @@ def bounding_box_reader(bb, bb_counter):
 # returns 3 arrays that each describe one box as a 6-vector
 #@autojit
 def multi_bounding_box_organizer(bb_counter, bb_150, bb_156, bb_157, bb_160, bb_170):
-    bb_150_xmin, bb_150_ymin, bb_150_zmin, bb_150_xmax, bb_150_ymax, bb_150_zmax = bounding_box_reader(bb_150,
-                                                                                                       bb_counter)
+    bb_150_xmin, bb_150_ymin, bb_150_zmin,\
+    bb_150_xmax, bb_150_ymax, bb_150_zmax = bounding_box_reader(bb_150, bb_counter)
     bc_150 = []
     bc_150.append(bb_150_xmin)
     bc_150.append(bb_150_xmax)
@@ -78,8 +69,8 @@ def multi_bounding_box_organizer(bb_counter, bb_150, bb_156, bb_157, bb_160, bb_
     bc_150.append(bb_150_zmin)
     bc_150.append(bb_150_zmax)
 
-    bb_156_xmin, bb_156_ymin, bb_156_zmin, bb_156_xmax, bb_156_ymax, bb_156_zmax = bounding_box_reader(bb_156,
-                                                                                                       bb_counter)
+    bb_156_xmin, bb_156_ymin, bb_156_zmin, \
+    bb_156_xmax, bb_156_ymax, bb_156_zmax = bounding_box_reader(bb_156, bb_counter)
     bc_156 = []
     bc_156.append(bb_156_xmin)
     bc_156.append(bb_156_xmax)
@@ -88,8 +79,8 @@ def multi_bounding_box_organizer(bb_counter, bb_150, bb_156, bb_157, bb_160, bb_
     bc_156.append(bb_156_zmin)
     bc_156.append(bb_156_zmax)
 
-    bb_157_xmin, bb_157_ymin, bb_157_zmin, bb_157_xmax, bb_157_ymax, bb_157_zmax = bounding_box_reader(bb_157,
-                                                                                                       bb_counter)
+    bb_157_xmin, bb_157_ymin, bb_157_zmin, \
+    bb_157_xmax, bb_157_ymax, bb_157_zmax = bounding_box_reader(bb_157, bb_counter)
     bc_157 = []
     bc_157.append(bb_157_xmin)
     bc_157.append(bb_157_xmax)
@@ -98,8 +89,8 @@ def multi_bounding_box_organizer(bb_counter, bb_150, bb_156, bb_157, bb_160, bb_
     bc_157.append(bb_157_zmin)
     bc_157.append(bb_157_zmax)
 
-    bb_160_xmin, bb_160_ymin, bb_160_zmin, bb_160_xmax, bb_160_ymax, bb_160_zmax = bounding_box_reader(bb_160,
-                                                                                                       bb_counter)
+    bb_160_xmin, bb_160_ymin, bb_160_zmin, \
+    bb_160_xmax, bb_160_ymax, bb_160_zmax = bounding_box_reader(bb_160, bb_counter)
     bc_160 = []
     bc_160.append(bb_160_xmin)
     bc_160.append(bb_160_xmax)
@@ -108,8 +99,8 @@ def multi_bounding_box_organizer(bb_counter, bb_150, bb_156, bb_157, bb_160, bb_
     bc_160.append(bb_160_zmin)
     bc_160.append(bb_160_zmax)
 
-    bb_170_xmin, bb_170_ymin, bb_170_zmin, bb_170_xmax, bb_170_ymax, bb_170_zmax = bounding_box_reader(bb_170,
-                                                                                                       bb_counter)
+    bb_170_xmin, bb_170_ymin, bb_170_zmin, \
+    bb_170_xmax, bb_170_ymax, bb_170_zmax = bounding_box_reader(bb_170, bb_counter)
     bc_170 = []
     bc_170.append(bb_170_xmin)
     bc_170.append(bb_170_xmax)
@@ -132,13 +123,17 @@ def displacement_calc(training_xyz_min, spacing_x, spacing_y, spacing_z, offset_
     displacement_samp.append(training_xyz_min[1])
     displacement_samp.append(training_xyz_min[2])
 
-    displacement_samp_mm = vox_to_mm(displacement_samp, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
+    displacement_samp_mm = vox_to_mm(displacement_samp,
+                                     spacing_x, spacing_y, spacing_z,
+                                     offset_x, offset_y, offset_z)
 
     displacement_samp_mm[0] = displacement_samp_mm[0] + 25
     displacement_samp_mm[1] = displacement_samp_mm[1] + 25
     displacement_samp_mm[2] = displacement_samp_mm[2] + 25
 
-    displacement_samp_mm = mm_to_vox(displacement_samp_mm, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
+    displacement_samp_mm = mm_to_vox(displacement_samp_mm,
+                                     spacing_x, spacing_y, spacing_z,
+                                     offset_x, offset_y, offset_z)
 
     displacement_samp_mm[0] = int(displacement_samp_mm[0])
     displacement_samp_mm[1] = int(displacement_samp_mm[1])
@@ -166,8 +161,11 @@ def feature_box_generator(data, training_x, training_y, training_z, displacement
     temp_feature_vec = []
 
     # generate feature box around selected voxel and append mean to feature vector
-    feature_box_0 = data[training_x - 2:training_x + 3, training_y - 2:training_y + 3, training_z - 2:training_z + 3]
+    feature_box_0 = data[training_x - 2:training_x + 3,
+                    training_y - 2:training_y + 3,
+                    training_z - 2:training_z + 3]
     temp_feature_vec.append(np.mean(feature_box_0))
+
 
     # generate 26 feature boxes in a certain distance to the selected pixel
     # add half of the displacement to the displacement and generate another 26 boxes
@@ -181,26 +179,45 @@ def feature_box_generator(data, training_x, training_y, training_z, displacement
             displacement_y = displacement_y + iterator_disp_y
             displacement_z = displacement_z + iterator_disp_z
         #TODO
-
-
-
-
-
         training_y = int(training_y)
         training_z = int(training_z)
         training_x = int(training_x)
-        feature_box_1 = data[((training_x - displacement_x) - 2):((training_x - displacement_x) + 3),
-                        (training_y - 2):(training_y + 3), (training_z - 2):(training_z + 3)]
-        feature_box_2 = data[training_x - 2:training_x + 3,
-                    (training_y + displacement_y) - 2:(training_y + displacement_y) + 3, training_z - 2:training_z + 3]
-        feature_box_3 = data[(training_x + displacement_x) - 2:(training_x + displacement_x) + 3,
-                    training_y - 2:training_y + 3, training_z - 2:training_z + 3]
-        feature_box_4 = data[training_x - 2:training_x + 3,
-                    (training_y - displacement_y) - 2:(training_y - displacement_y) + 3, training_z - 2:training_z + 3]
-        feature_box_5 = data[training_x - 2:training_x + 3, training_y - 2:training_y + 3, (training_z - displacement_z) - 2:(training_z - displacement_z) + 3]
-        feature_box_6 = data[training_x - 2:training_x + 3, training_y - 2:training_y + 3, (training_z + displacement_z) - 2:(training_z + displacement_z) + 3]
-        feature_box_7 = data[(training_x - displacement_x) - 2:(training_x - displacement_x) + 3,
-                    (training_y - displacement_y) - 2:(training_y - displacement_y) + 3, training_z - 2:training_z + 3]
+
+        feature_box_1 = data[
+                        ((training_x - displacement_x) - 2):((training_x - displacement_x) + 3),
+                        (training_y - 2):(training_y + 3),
+                        (training_z - 2):(training_z + 3)
+                        ]
+        feature_box_2 = data[
+                        training_x - 2:training_x + 3,
+                        (training_y + displacement_y) - 2:(training_y + displacement_y) + 3,
+                        training_z - 2:training_z + 3
+                        ]
+        feature_box_3 = data[
+                        (training_x + displacement_x) - 2:(training_x + displacement_x) + 3,
+                        training_y - 2:training_y + 3,
+                        training_z - 2:training_z + 3
+                        ]
+        feature_box_4 = data[
+                        training_x - 2:training_x + 3,
+                        (training_y - displacement_y) - 2:(training_y - displacement_y) + 3,
+                        training_z - 2:training_z + 3
+                        ]
+        feature_box_5 = data[
+                        training_x - 2:training_x + 3,
+                        training_y - 2:training_y + 3,
+                        (training_z - displacement_z) - 2:(training_z - displacement_z) + 3
+                        ]
+        feature_box_6 = data[
+                        training_x - 2:training_x + 3,
+                        training_y - 2:training_y + 3,
+                        (training_z + displacement_z) - 2:(training_z + displacement_z) + 3
+                        ]
+        feature_box_7 = data[
+                        (training_x - displacement_x) - 2:(training_x - displacement_x) + 3,
+                        (training_y - displacement_y) - 2:(training_y - displacement_y) + 3,
+                        training_z - 2:training_z + 3
+                        ]
         feature_box_8 = data[(training_x - displacement_x) - 2:(training_x - displacement_x) + 3,
                     (training_y + displacement_y) - 2:(training_y + displacement_y) + 3, training_z - 2:training_z + 3]
         feature_box_9 = data[(training_x + displacement_x) - 2:(training_x + displacement_x) + 3,
@@ -235,13 +252,30 @@ def feature_box_generator(data, training_x, training_y, training_z, displacement
                     (training_y + displacement_y) - 2:(training_y + displacement_y) + 3, (training_z - displacement_z) - 2:(training_z - displacement_z) + 3]
         feature_box_24 = data[(training_x + displacement_x) - 2:(training_x + displacement_x) + 3,
                     (training_y + displacement_y) - 2:(training_y + displacement_y) + 3, (training_z + displacement_z) - 2:(training_z + displacement_z) + 3]
-        feature_box_25 = data[(training_x + displacement_x) - 2:(training_x + displacement_x) + 3,
-                     (training_y - displacement_y) - 2:(training_y - displacement_y) + 3, (training_z - displacement_z) - 2:(training_z - displacement_z) + 3]
+        feature_box_25 = data[
+                         (training_x + displacement_x) - 2:(training_x + displacement_x) + 3,
+                         (training_y - displacement_y) - 2:(training_y - displacement_y) + 3,
+                         (training_z - displacement_z) - 2:(training_z - displacement_z) + 3]
         feature_box_26 = data[(training_x + displacement_x) - 2:(training_x + displacement_x) + 3,
                      (training_y - displacement_y) - 2:(training_y - displacement_y) + 3, (training_z + displacement_z) - 2:(training_z + displacement_z) + 3]
 
 
         # calculate mean of feature boxes
+        if(counter == 2):
+            print((training_x + displacement_x) - 2)
+            print((training_x + displacement_x) + 3)
+            #print(data[271:276])
+            print((training_y - displacement_y) - 2)
+            print((training_y - displacement_y) + 3)
+            #print(data[221:226])
+            print((training_z - displacement_z) - 2)
+            print((training_z - displacement_z) + 3)
+            print(data[0:3])
+
+
+            print(feature_box_25)
+            print(np.mean(feature_box_25))
+            print("")
 
         temp_feature_vec.append(np.mean(feature_box_1))
         temp_feature_vec.append(np.mean(feature_box_2))
@@ -304,9 +338,13 @@ def training_subset_generator(data, spacing_x, spacing_y, spacing_z, offset_x, o
 
     # calculate coordinates of voxel training subset
 
-    training_xyz_min = mm_to_vox(training_xyz_min, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
+    training_xyz_min = mm_to_vox(training_xyz_min,
+                                 spacing_x, spacing_y, spacing_z,
+                                 offset_x, offset_y, offset_z)
 
-    training_xyz_max = mm_to_vox(training_xyz_max, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
+    training_xyz_max = mm_to_vox(training_xyz_max,
+                                 spacing_x, spacing_y, spacing_z,
+                                 offset_x, offset_y, offset_z)
 
     # round coordinates
 
@@ -322,7 +360,14 @@ def training_subset_generator(data, spacing_x, spacing_y, spacing_z, offset_x, o
     return training_xyz_min, training_xyz_max
 
 
-def loop_subset_training(data, training_xyz_min, training_xyz_max, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z, bc_150, bc_156, bc_157, bc_160, bc_170, displacement_x, displacement_y, displacement_z, final_feature_vec, final_offset_vec_150, final_offset_vec_156, final_offset_vec_157, final_offset_vec_160, final_offset_vec_170):
+def loop_subset_training(data, training_xyz_min, training_xyz_max,
+                         spacing_x, spacing_y, spacing_z,
+                         offset_x, offset_y, offset_z,
+                         bc_150, bc_156, bc_157, bc_160, bc_170,
+                         displacement_x, displacement_y, displacement_z,
+                         final_feature_vec,
+                         final_offset_vec_150, final_offset_vec_156, final_offset_vec_157,
+                         final_offset_vec_160, final_offset_vec_170):
     # loop over voxels in this window
     counter = 0
     for training_z in range(training_xyz_min[2], training_xyz_max[2]+1):
@@ -336,7 +381,9 @@ def loop_subset_training(data, training_xyz_min, training_xyz_max, spacing_x, sp
                 temp_train_coord.append(training_y)
                 temp_train_coord.append(training_z)
 
-                temp_train_coord = vox_to_mm(temp_train_coord, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
+                temp_train_coord = vox_to_mm(temp_train_coord,
+                                             spacing_x, spacing_y, spacing_z,
+                                             offset_x, offset_y, offset_z)
 
                 # calculate offset between bounding box and voxel(mm) in mm
                 # v-bc = (vx, vx, vy, vy, vz, vz)
@@ -347,9 +394,17 @@ def loop_subset_training(data, training_xyz_min, training_xyz_max, spacing_x, sp
                 bb_offset_170 = bb_offset_calc(temp_train_coord, bc_170)
 
                 # create mean feature boxes
-                temp_feature_vec = feature_box_generator(data, training_x, training_y, training_z, displacement_x, displacement_y, displacement_z)
+                temp_feature_vec = feature_box_generator(data,
+                                                         training_x, training_y, training_z,
+                                                         displacement_x, displacement_y, displacement_z)
 
                 # add feature vector of current voxel to the complete feature vector
+                if(np.any(np.isnan(temp_feature_vec))):
+                    #TODO Daria
+                    print("!!!!!!!!!")
+                    print(temp_feature_vec)
+                    print("!!!!!!!!!")
+                    exit()
                 final_feature_vec.append(temp_feature_vec)
                 final_offset_vec_150.append(bb_offset_150)
                 final_offset_vec_156.append(bb_offset_156)
@@ -400,3 +455,25 @@ def bb_offset_calc(temp_train_coord, bc):
     bb_offset.append(temp_train_coord[2] - bc[4])
     bb_offset.append(temp_train_coord[2] - bc[5])
     return bb_offset
+
+'''
+
+    boxfile = open(bb[bb_counter], 'r')
+    lines = boxfile.readlines()
+    numbers1 = lines[5].split()
+    zmin = numbers1[2]
+    zmin = float(zmin)
+    y2 = numbers1[1]
+    y2 = float(y2)
+    x = numbers1[0]
+    x = float(x)
+    numbers2 = lines[11].split()
+    zmax = numbers2[2]
+    zmax = float(zmax)
+    y = numbers2[1]
+    y = float(y)
+    x2 = numbers2[0]
+    x2 = float(x2)
+    boxfile.close()
+
+'''
