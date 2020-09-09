@@ -1,21 +1,17 @@
 from sklearn.ensemble import RandomForestRegressor
-import os
 from timeit import default_timer as timer
-import argparse
-import textwrap
-import numpy as np
 from sklearn.externals import joblib
-# -----methods-----
+
 from mietzner_methods import nifti_loader, nifti_image_affine_reader, multi_bounding_box_organizer,\
     displacement_calc, training_subset_generator, loop_subset_training
 from SharedMethods import get_dict_of_paths
 
 # funktioniert mit Mietzner Daten
-#GT_BB_PATH = "/Data/Daria/RRF/GT-BB/"
-GT_BB_PATH = "/Data/Daria/RRF/BB-TEST/"
+GT_BB_PATH = "/Data/Daria/RRF/GT-BB/"
+#GT_BB_PATH = "/Data/Daria/RRF/BB-TEST/"
 #GT_BB_PATH = "/Data/Daria/RRF/_GT-MIETZNER/"
-#SCAN_PATH = "/Data/Daria/RRF/CT-SCANS/"
-SCAN_PATH= "/Data/Daria/RRF/SCANS-TEST/"
+SCAN_PATH = "/Data/Daria/RRF/CT-SCANS/"
+#SCAN_PATH= "/Data/Daria/RRF/SCANS-TEST/"
 #SCAN_PATH = "/Data/Daria/RRF/_CT-SCANS-MIETZNER/"
 SAVE_PATH = "/Data/Daria/RRF/"
 trees = 50
@@ -136,16 +132,12 @@ print("Elapsed time: ", (timer() - start) / 60)
 
 # load files for training
 start = timer()
-#exit()
-# Dauer pro RandomForestRegressor ca 3h
+# Dauer mit Mietzner Daten pro RandomForestRegressor ca 3h
+# Dauer mit neuen Daten insgesamt für ALLE RRF nur 40 Minuten ( ?komisch?)
 # -------------------------------------------------------------------------------------------
 # use files to train a random forest regressor
 print("start training RRF for 150")
 regressor_150 = RandomForestRegressor(n_estimators=trees, random_state=0, max_depth=depth)
-print(final_feature_vec)
-print(np.any(np.isnan(final_feature_vec)))
-
-
 regressor_150.fit(final_feature_vec, final_offset_vec_150)
 # Output a pickle file for the model
 joblib.dump(regressor_150, '{}model_150.pkl'.format(SAVE_PATH))

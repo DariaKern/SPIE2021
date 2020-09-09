@@ -6,14 +6,9 @@ import argparse
 import textwrap
 from sklearn.externals import joblib
 # -------------------methods-----------------------
-from simple_methods import nifti_loader
-from simple_methods import nifti_image_affine_reader
-from feature_box_methods import training_subset_generator
-from feature_box_methods import displacement_calc
-from loop_methods import loop_offset_to_bb
-from loop_methods import loop_apply
-from simple_methods import bb_finalize
-from simple_methods import make_bounding_box
+from mietzner_methods import nifti_loader, nifti_image_affine_reader,\
+    training_subset_generator, displacement_calc, \
+    loop_offset_to_bb, loop_apply, bb_finalize, make_bounding_box
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=textwrap.dedent('''\
             Apply Random Regression Forests on CT data
