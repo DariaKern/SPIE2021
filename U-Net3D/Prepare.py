@@ -111,7 +111,8 @@ def crop_out_bb(orig_img, box_path):
 
     # x and y are negative because of nifti file orientation -x, -y, x
     # -> swap min and max and multiply by -1 to make positive
-    # alson substract 1 from all max...only god knows why
+    # TODO: check if neccessary to substract -1
+    # also substract 1 from all max...only god knows why
     x_min = (p_max[0]-1)*-1
     x_max = (p_min[0])*-1
     y_min = (p_max[1]-1)*-1
@@ -119,6 +120,19 @@ def crop_out_bb(orig_img, box_path):
     z_min = p_min[2]
     z_max = p_max[2]-1
 
+    #TODO:
+    # extreme cases
+    if x_min < 0:
+        print(x_min)
+        x_min = 0
+    if y_min < 0:
+        print(y_min)
+        y_min = 0
+    if z_min < 0:
+        print(z_min)
+        z_min = 0
+    print(box_path)
+    print(x_min,x_max,y_min,y_max,z_min, z_max)
     # cut out ROI with slicing operator
     result_img = orig_img[x_min:x_max, y_min:y_max, z_min:z_max]
 
@@ -207,7 +221,7 @@ def create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORG
     resample_files(path_x_test_cropped, path_x_test_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
-def create_y_test(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN):
+def create_y_test(GT_SEG_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN):
     print("")
     print("CREATING Y TEST")
     path_y_test, path_y_test_cropped, path_y_test_resampled, path_y_test_orig = create_paths(SAVE_PATH, "ytest")
@@ -217,7 +231,7 @@ def create_y_test(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, OR
     filter_out_relevant_segmentations(path_y_test_orig, path_y_test_orig, ORGAN)
 
     # crop GT BBs out of GT SEGs
-    crop_out_bbs(GT_SEG_PATH, GT_BB_PATH, path_y_test_cropped, test_split, ORGAN, isSegmentation=True)
+    crop_out_bbs(GT_SEG_PATH, RRF_BB_PATH, path_y_test_cropped, test_split, ORGAN, isSegmentation=True)
 
     # resample cropped out area
     resample_files(path_y_test_cropped, path_y_test_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
@@ -232,4 +246,4 @@ def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIO
     create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)
     create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN)
     create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN)
-    create_y_test(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN)
+    create_y_test(GT_SEG_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN)

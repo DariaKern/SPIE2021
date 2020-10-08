@@ -3,6 +3,8 @@ from Prepare import prepare, split_train_and_test
 from Train import train
 from Apply import apply
 from Evaluate import evaluate, summarize_eval
+from DATA.normalize import set_direction, set_origin, \
+    set_voxeltype, set_spacing, check_all
 
 '''_____________________________________________________________________________________________'''
 '''|................................DEFINE NEEDED VARIABLES....................................|'''
@@ -52,8 +54,8 @@ BATCH = 5
 EPOCHS = 50
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
-CUSTOM_TEST_SET = [7]
-#CUSTOM_TEST_SET = None
+#CUSTOM_TEST_SET = [7]
+CUSTOM_TEST_SET = None
 
 '''_____________________________________________________________________________________________'''
 '''|........................................GPU................................................|'''
@@ -70,16 +72,12 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 #prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET)
 #train(SAVE_PATH, DIMENSIONS, ORGAN, VAL_SPLIT, BATCH, EPOCHS)
-apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH)
-
-
-
-
+#apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH)
 
 
 def run_x_times(times):
     for x in range(0, times):
-        number = x + 77
+        number = x + 88
         #test_set = [1,7,8,9,12,13,15,16,17,25,26,28,29,31,33,35,41,44,45,46]
         test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT)
         print(test_set)
@@ -98,6 +96,14 @@ def run_x_times(times):
 
 
 #for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
- #   summarize_eval(SAVE_PATH, organ)
+    #summarize_eval(SAVE_PATH, organ)
 #run_x_times(100)
 
+out_dir = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/CT-SCANS/"
+in_dir = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/seg/"
+
+#set_direction(in_dir1, out_dir)
+#set_origin(in_dir, out_dir)
+#set_voxeltype(in_dir, out_dir)
+#set_spacing(in_dir, out_dir)
+check_all(out_dir)

@@ -75,7 +75,7 @@ def resample_files_reverse(path, target_path, bb_folder_path, ORGAN):
 
         # resample to original cut-out size (Depth, Height, Width)
         img = sitk.ReadImage(file.path)
-        result_img = resample_file(img, target_dim[0], target_dim[1], target_dim[2])
+        result_img = resample_file(img, target_dim[2], target_dim[1], target_dim[0])
         sitk.WriteImage(result_img, "{}{}".format(target_path, file.name))
 
     print("done. saved reverse resampled files to '{}'".format(target_path))
@@ -89,6 +89,7 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
     print("reverse cropping files in '{}'".format(path))
     for file in os.scandir(path):
         patient_no = find_patient_no_in_file_name(file.name)
+        print("patient file #{}".format(patient_no))
 
         # load respective original CT-Scan as reference, get some info and create new array of same size
         ref_img_path = ref_files_path_dict[patient_no]
@@ -121,6 +122,8 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
         z_min = p_min[2]
         z_max = p_max[2] - 1
 
+        print(x_min, x_max, y_min, y_max, z_min, z_max)
+
         # put the cut-out(cropped out area) back into its right position
         z_length = img_arr.shape[2]
         y_length = img_arr.shape[1]
@@ -133,6 +136,7 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
         # save nifti file with patient number in name
         result_img = sitk.GetImageFromArray(result_img_arr)
         result_img.SetSpacing((2,2,2))
+        result_img = sitk.Cast(result_img, sitk.sitkUInt16)
         sitk.WriteImage(result_img, "{}{}".format(target_path, file.name))
 
     print("done. saved reverse cropped files to '{}'".format(target_path))
