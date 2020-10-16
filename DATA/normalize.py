@@ -47,6 +47,31 @@ def set_voxeltype(in_dir, out_dir):
             sitk.WriteImage(img, "{}{}".format(out_dir, file.name))
 
 
+def change_segmentation_colorcode(organs, folder_path, target_folder_path):
+    switcher = {
+        organs[0]: 170,     # liver
+        organs[1]: 156,     # left kidney
+        organs[2]: 157,     # right kidney
+        organs[3]: 160,     # spleen
+        organs[4]: 150,     # pancreas
+    }
+    for file in os.scandir(folder_path):
+        print("{}".format(file.name))
+        # load file and get array
+        orig_img = sitk.ReadImage(file.path)
+        orig_img_arr = sitk.GetArrayFromImage(orig_img)
+
+        result_img_arr = orig_img_arr
+        for colorcode in organs:
+            # change colors
+            result_img_arr[orig_img_arr == colorcode] = switcher.get(colorcode)
+            #result_img = sitk.Mask(orig_img, sitk.Equal(organ_label, orig_img))  # procedural API of SimpleITK
+
+        result_img = sitk.GetImageFromArray(result_img_arr)
+        result_img.CopyInformation(orig_img)
+        sitk.WriteImage(result_img, "{}{}".format(target_folder_path, file.name))
+
+
 def check(file):
 
     patient = find_patient_no_in_file_name(file.name)

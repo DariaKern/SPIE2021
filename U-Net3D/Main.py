@@ -4,7 +4,7 @@ from Train import train
 from Apply import apply
 from Evaluate import evaluate, summarize_eval
 from DATA.normalize import set_direction, set_origin, \
-    set_voxeltype, set_spacing, check_all
+    set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
 '''_____________________________________________________________________________________________'''
 '''|................................DEFINE NEEDED VARIABLES....................................|'''
@@ -77,7 +77,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 def run_x_times(times):
     for x in range(0, times):
-        number = x + 88
+        number = x + 5
         #test_set = [1,7,8,9,12,13,15,16,17,25,26,28,29,31,33,35,41,44,45,46]
         test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT)
         print(test_set)
@@ -93,17 +93,25 @@ def run_x_times(times):
             evaluate(SAVE_PATH, organ, number)
 
 
+for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
+    #summarize_eval(SAVE_PATH, organ
+    run_x_times(100)
 
-
-#for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
-    #summarize_eval(SAVE_PATH, organ)
-#run_x_times(100)
-
-out_dir = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/CT-SCANS/"
-in_dir = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/seg/"
 
 #set_direction(in_dir1, out_dir)
 #set_origin(in_dir, out_dir)
 #set_voxeltype(in_dir, out_dir)
 #set_spacing(in_dir, out_dir)
-check_all(out_dir)
+#check_all(out_dir)
+
+#from RRF.RRF_Prepare import create_gt_bb_alternative
+#in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/GT-SEG/"
+#out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/GT-BB/"
+#create_gt_bb_alternative(in_path, out_path)
+
+'''
+in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/GT-SEG/"
+out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step4 segmentation color/"
+organs = [6, 3, 2, 1, 11]
+change_segmentation_colorcode(organs, in_path, out_path)
+'''
