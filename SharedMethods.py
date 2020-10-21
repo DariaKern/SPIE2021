@@ -1,11 +1,9 @@
 import shutil
 import os, re
-import nibabel as nib
 import SimpleITK as sitk
 import numpy as np
 from pathlib import Path
 import vtk
-
 '''_____________________________________________________________________________________________'''
 '''|.................................Helping Methods...........................................|'''
 '''_____________________________________________________________________________________________'''
@@ -144,8 +142,8 @@ def get_organized_data(path, DIMENSIONS, isSegmentation=False):
     index = 0  # keep extra index in case patients skip a number
     for key in sorted(dict_file_paths.keys()):
         file_path = dict_file_paths[key]
-        img = nib.load(file_path)
-        img_arr = img.get_fdata()
+        img = sitk.ReadImage(file_path)
+        img_arr = sitk.GetArrayFromImage(img)
         img_arr = np.expand_dims(img_arr, axis=3)  # add a fourth dimension
         data[index] = img_arr
         index = index + 1

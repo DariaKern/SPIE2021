@@ -34,27 +34,27 @@ ORGAN = "liver"
 
 # define train-test split (NEEDED)
 # 0.00 (0%) - 1.00 (100%) percentage of test files among All files
-SPLIT = 0.4
+SPLIT = 0.2
 
 # define threshold for segmentation mask
 # recommended thresh: 0.5, for pancreas: 0.3
 THRESH = 0.5
 
 # Define input image size
-DIMENSIONS = [64, 64, 64, 1]
+DIMENSIONS = [96, 96, 96, 1]
 
 # define validation split  (Default = 0.1)
 # 0.00 (0%) - 1.00 (100%) percentage of validation files among Test files
 VAL_SPLIT = 0.1
 
 # define batch size (Default = 15)
-BATCH = 5
+BATCH = 4
 
 # define number of epochs (Default = 50)
-EPOCHS = 50
+EPOCHS = 100
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
-#CUSTOM_TEST_SET = [7]
+#CUSTOM_TEST_SET = [19]
 CUSTOM_TEST_SET = None
 
 '''_____________________________________________________________________________________________'''
@@ -78,7 +78,9 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 def run_x_times(times):
     for x in range(0, times):
         number = x + 5
-        #test_set = [1,7,8,9,12,13,15,16,17,25,26,28,29,31,33,35,41,44,45,46]
+        #custom_test_set = [19]
+        #test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT, custom_test_set)
+
         test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT)
         print(test_set)
         for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
@@ -91,7 +93,7 @@ def run_x_times(times):
             train(SAVE_PATH, DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
             apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
             evaluate(SAVE_PATH, organ, number)
-
+        #exit()
 
 for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
     #summarize_eval(SAVE_PATH, organ

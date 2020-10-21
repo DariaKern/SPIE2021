@@ -1,13 +1,7 @@
-from SharedMethods import get_dict_of_paths, find_patient_no_in_file_name
-import SimpleITK as sitk
-import os
+from U-Net3D/Evaluate import evaluate_predictions
 from openpyxl import load_workbook
-import numpy as np
-from openpyxl.styles import Alignment, NamedStyle, Font
-from openpyxl import Workbook
-import openpyxl as op
 
-def evaluate(SAVE_PATH, ORGAN, ROUND):
+def evaluate2D(SAVE_PATH, ORGAN, ROUND):
 
     # open excel sheet
     wb = load_workbook(filename="{}2DEvaluation {}.xlsx".format(SAVE_PATH, ORGAN))

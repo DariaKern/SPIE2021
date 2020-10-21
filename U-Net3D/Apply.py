@@ -32,7 +32,8 @@ def get_segmentation_mask(img_arr, organ, thresh):
                 # values > thresh will be labeled as segmentation mask
                 # result_img_arr should have shape 64,64,64,1
                 if img_arr[x][y][z][0] > thresh:
-                    result_img_arr[z, y, x] = organ_label
+                    result_img_arr[x, y, z] = organ_label
+
     print("min: {}, max: {}".format(min_val, max_val))
     return result_img_arr
 

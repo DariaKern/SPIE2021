@@ -104,25 +104,27 @@ def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50)
     architecture = generate_U_Net(DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2], DIMENSIONS[3])
 
     # prepare callbacks
-    shutil.rmtree("./logs", ignore_errors=True)
-    cb_tensorboard = tf.keras.callbacks.TensorBoard(
-        log_dir="./logs",
-        update_freq=1) # Note that writing too frequently to TensorBoard can slow down your training.
-    cb_earlystopper = EarlyStopping(patience=20, verbose=1)
-    cb_checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
+    #shutil.rmtree("./logs", ignore_errors=True)
+    #cb_tensorboard = tf.keras.callbacks.TensorBoard(
+        #log_dir="./logs",
+        #update_freq=1) # Note that writing too frequently to TensorBoard can slow down your training.
+    #cb_earlystopper = EarlyStopping(patience=10, verbose=1)
+    #cb_checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
 
     # train the model
     history = architecture.fit(x_train, y_train,
                         validation_split=val_split,
                         batch_size=batch_size,
                         epochs=epochs,
-                        callbacks=[cb_earlystopper, cb_checkpointer, cb_tensorboard])
+                        #callbacks=[cb_earlystopper, cb_checkpointer, cb_tensorboard]
+                        )
 
     # generate image with model architecture and show training history
-    plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)
+    #plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)
+    plot_history(history)
 
     #INFO: save U-Net non needed for early stopping already saves the best model
-    #model.save('{}U-Net.h5'.format(save_path))
+    architecture.save('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN))
 
     '''
     Use TensorBoard
