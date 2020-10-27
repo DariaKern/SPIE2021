@@ -1,8 +1,8 @@
 import tensorflow as tf
-from Prepare import prepare, split_train_and_test
-from Train import train
-from Apply import apply
-from Evaluate import evaluate, summarize_eval
+from Prepare2D import prepare2D, split_train_and_test2D
+from Train2D import train2D
+from Apply2D import apply2D
+from Evaluate2D import evaluate2D, summarize_eval2D
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
@@ -41,20 +41,21 @@ SPLIT = 0.2
 THRESH = 0.5
 
 # Define input image size
-DIMENSIONS = [96, 96, 96, 1]
+DIMENSIONS = [96, 96, 1]
+PREP_DIMENSIONS = [96, 96, 96, 1]
+
 
 # define validation split  (Default = 0.1)
 # 0.00 (0%) - 1.00 (100%) percentage of validation files among Test files
 VAL_SPLIT = 0.1
 
 # define batch size (Default = 15)
-BATCH = 4
+BATCH = 8
 
 # define number of epochs (Default = 50)
 EPOCHS = 100
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
-#CUSTOM_TEST_SET = [19]
 CUSTOM_TEST_SET = None
 
 '''_____________________________________________________________________________________________'''
@@ -70,50 +71,32 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''|................................METHODS....................................|'''
 '''_____________________________________________________________________________________________'''
 
-#prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET)
+#prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, PREP_DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET)
 #train(SAVE_PATH, DIMENSIONS, ORGAN, VAL_SPLIT, BATCH, EPOCHS)
 #apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH)
 
 
 def run_x_times(times):
     for x in range(0, times):
-        number = x + 5
-        #custom_test_set = [19]
-        #test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT, custom_test_set)
+        print("run #")
+        print(x)
+        number = x
+        #custom_test_set = [19,63]
+        #test_set, train_set = split_train_and_test2D(SCAN_PATH, SPLIT, custom_test_set)
 
-        test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT)
-        print(test_set)
+        test_set, train_set = split_train_and_test2D(SCAN_PATH, SPLIT)
         for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
         #for organ in ['liver']:
             if organ == 'pancreas':
                 thresh = 0.3
             else:
                 thresh = 0.5
-            prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, organ, test_set)
-            train(SAVE_PATH, DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
-            apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
-            evaluate(SAVE_PATH, organ, number)
+            prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, PREP_DIMENSIONS, SPLIT, organ, test_set)
+            train2D(SAVE_PATH, PREP_DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
+            print("APPLY 2D")
+            apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, PREP_DIMENSIONS, organ, thresh)
+            evaluate2D(SAVE_PATH, organ, number)
         #exit()
 
-for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
-    #summarize_eval(SAVE_PATH, organ
-    run_x_times(100)
+run_x_times(10)
 
-
-#set_direction(in_dir1, out_dir)
-#set_origin(in_dir, out_dir)
-#set_voxeltype(in_dir, out_dir)
-#set_spacing(in_dir, out_dir)
-#check_all(out_dir)
-
-#from RRF.RRF_Prepare import create_gt_bb_alternative
-#in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/GT-SEG/"
-#out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/GT-BB/"
-#create_gt_bb_alternative(in_path, out_path)
-
-'''
-in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/GT-SEG/"
-out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step4 segmentation color/"
-organs = [6, 3, 2, 1, 11]
-change_segmentation_colorcode(organs, in_path, out_path)
-'''

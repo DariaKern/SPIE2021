@@ -1,5 +1,8 @@
-from U-Net3D/Evaluate import evaluate_predictions
+from UNet3D.Evaluate import evaluate_predictions, summarize_eval
 from openpyxl import load_workbook
+
+def summarize_eval2D(SAVE_PATH, ORGAN):
+    summarize_eval(SAVE_PATH, ORGAN)
 
 def evaluate2D(SAVE_PATH, ORGAN, ROUND):
 

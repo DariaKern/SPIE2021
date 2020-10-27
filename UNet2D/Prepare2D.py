@@ -1,4 +1,4 @@
-from U-Net3D/Prepare import split_train_and_test, create_x_train, create_y_train, create_x_test, create_y_test
+from UNet3D.Prepare import split_train_and_test, create_x_train, create_y_train, create_x_test, create_y_test
 from openpyxl.styles import Alignment, NamedStyle, Font
 from openpyxl import Workbook
 
@@ -49,10 +49,14 @@ def create_excel_sheet2D(SAVE_PATH, ORGAN, test_split, train_split):
     wb.save("{}2DEvaluation {}.xlsx".format(SAVE_PATH, ORGAN))
 
 
+def split_train_and_test2D(SCAN_PATH, SPLIT, CUSTOM_TEST_SET=None):
+    test_split, train_split = split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
+    return test_split, train_split
+
 
 def prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET=None):
     # get training data
-    test_split, train_split = split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
+    test_split, train_split = split_train_and_test2D(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
 
     create_excel_sheet2D(SAVE_PATH, ORGAN, test_split, train_split)
 

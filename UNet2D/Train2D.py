@@ -8,7 +8,7 @@ from tensorflow.keras.utils import plot_model
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint
-from SharedMethods import get_organized_data
+from SharedMethods2D import get_organized_data_train2D
 import shutil
 
 
@@ -84,11 +84,11 @@ def train2D(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=5
     # get training data
     path_x_train_resampled = "{}Xtrain/resampled/".format(SAVE_PATH)
     path_y_train_resampled = "{}ytrain/resampled/".format(SAVE_PATH)
-    x_train = get_organized_data(path_x_train_resampled, DIMENSIONS)
-    y_train = get_organized_data(path_y_train_resampled, DIMENSIONS, True)
+    x_train = get_organized_data_train2D(path_x_train_resampled, DIMENSIONS)
+    y_train = get_organized_data_train2D(path_y_train_resampled, DIMENSIONS, True)
 
     # generate the 2D U-Net model (Width, Height, Channels)
-    architecture = generate_U_Net2D(DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
+    architecture = generate_U_Net2D(DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[3])
 
     '''
     # prepare callbacks
@@ -112,5 +112,5 @@ def train2D(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=5
     #plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)
 
     #INFO: save U-Net non needed for early stopping already saves the best model
-    architecture.save('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN))
+    architecture.save('{}{}U-Net2D.h5'.format(SAVE_PATH, ORGAN))
 

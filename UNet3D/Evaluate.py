@@ -117,10 +117,10 @@ def evaluate_predictions(pred_path, gt_path):
         patient_no = find_patient_no_in_file_name(prediction.name)
         gt_img_path = dict_gt_paths[patient_no]
 
+        print("")
         print("Patient Number : {}".format(patient_no))
         hd, avg_hd = calculate_hausdorff_distance(gt_img_path, prediction.path)
         dice = calculate_label_overlap_measures(gt_img_path, prediction.path)
-        print("")
 
         results.append([patient_no, hd, avg_hd, dice])
 

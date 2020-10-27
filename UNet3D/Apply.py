@@ -65,9 +65,11 @@ def resample_files_reverse(path, target_path, bb_folder_path, ORGAN):
     ref_files_folder_path = "/home/daria/Desktop/Data/Daria/DATA/Xtest/cropped/"
     ref_files_path_dict = get_dict_of_paths(ref_files_folder_path)
 
+    print("")
     print("reverse resampling files in '{}'".format(path))
     for file in os.scandir(path):
         patient_no = find_patient_no_in_file_name(file.name)
+        print("patient file #{}".format(patient_no))
 
         # load respective cropped CT-Scan as reference and get size
         ref_img_path = ref_files_path_dict[patient_no]
@@ -87,6 +89,7 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
     bb_path_dict = get_dict_of_paths(bb_folder_path, ORGAN)
     ref_files_path_dict = get_dict_of_paths(ref_files_folder_path)
 
+    print("")
     print("reverse cropping files in '{}'".format(path))
     for file in os.scandir(path):
         patient_no = find_patient_no_in_file_name(file.name)
@@ -123,7 +126,7 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
         z_min = p_min[2]
         z_max = p_max[2] - 1
 
-        print(x_min, x_max, y_min, y_max, z_min, z_max)
+        #print(x_min, x_max, y_min, y_max, z_min, z_max)
 
         # put the cut-out(cropped out area) back into its right position
         z_length = img_arr.shape[2]
