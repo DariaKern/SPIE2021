@@ -82,7 +82,6 @@ def run_x_times(times):
         #test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT, custom_test_set)
 
         test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT)
-        print(test_set)
         for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
         #for organ in ['liver']:
             if organ == 'pancreas':
@@ -95,9 +94,7 @@ def run_x_times(times):
             evaluate(SAVE_PATH, organ, number)
         #exit()
 
-for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
-    #summarize_eval(SAVE_PATH, organ
-    run_x_times(100)
+run_x_times(100)
 
 
 #set_direction(in_dir1, out_dir)

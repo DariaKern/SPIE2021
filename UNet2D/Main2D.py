@@ -11,14 +11,6 @@ from DATA.normalize import set_direction, set_origin, \
 '''_____________________________________________________________________________________________'''
 
 # Darias local standard paths (NEEDED)
-'''
-SCAN_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/CT-SCANS/"
-GT_SEG_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/GT-SEG"
-GT_BB_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/GT-BB/"
-RRF_BB_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/BB/"
-SAVE_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/"
-'''
-
 SCAN_PATH = "/Data/Daria/DATA/CT-SCANS/"
 GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
 GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
@@ -40,8 +32,7 @@ SPLIT = 0.2
 # recommended thresh: 0.5, for pancreas: 0.3
 THRESH = 0.5
 
-# Define input image size
-DIMENSIONS = [96, 96, 1]
+# Define input image size dimensions for preparation (actual dimensions are one less)
 PREP_DIMENSIONS = [96, 96, 96, 1]
 
 
@@ -71,15 +62,9 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''|................................METHODS....................................|'''
 '''_____________________________________________________________________________________________'''
 
-#prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, PREP_DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET)
-#train(SAVE_PATH, DIMENSIONS, ORGAN, VAL_SPLIT, BATCH, EPOCHS)
-#apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH)
-
 
 def run_x_times(times):
     for x in range(0, times):
-        print("run #")
-        print(x)
         number = x
         #custom_test_set = [19,63]
         #test_set, train_set = split_train_and_test2D(SCAN_PATH, SPLIT, custom_test_set)
@@ -93,7 +78,6 @@ def run_x_times(times):
                 thresh = 0.5
             prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, PREP_DIMENSIONS, SPLIT, organ, test_set)
             train2D(SAVE_PATH, PREP_DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
-            print("APPLY 2D")
             apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, PREP_DIMENSIONS, organ, thresh)
             evaluate2D(SAVE_PATH, organ, number)
         #exit()
