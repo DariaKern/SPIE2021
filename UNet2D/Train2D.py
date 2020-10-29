@@ -90,20 +90,17 @@ def train2D(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=5
     # generate the 2D U-Net model (Width, Height, Channels)
     architecture = generate_U_Net2D(DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[3])
 
-    '''
-    # prepare callbacks
-    shutil.rmtree("./logs", ignore_errors=True)
-    cb_tensorboard = tf.keras.callbacks.TensorBoard(
-        log_dir="./logs",
-        update_freq=1) # Note that writing too frequently to TensorBoard can slow down your training.
-    cb_earlystopper = EarlyStopping(patience=10, verbose=1)
-    cb_checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
-    '''
+    #shutil.rmtree("/home/daria/Desktop/PycharmProjects/SPIE2021/logs/", ignore_errors=True)
+    #cb_tensorboard = tf.keras.callbacks.TensorBoard(
+        #log_dir="/home/daria/Desktop/PycharmProjects/SPIE2021/logs/",
+        #update_freq=1)  # Note that writing too frequently to TensorBoard can slow down your training.
+
     # train the model
     history = architecture.fit(x_train, y_train,
                         validation_split=val_split,
                         batch_size=batch_size,
                         epochs=epochs,
+                        #callbacks= [cb_tensorboard]
                         #callbacks=[cb_earlystopper, cb_checkpointer, cb_tensorboard]
                                )
 

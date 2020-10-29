@@ -24,7 +24,7 @@ def get_organized_data_train2D(path, DIMENSIONS, isSegmentation=False):
         img_arr = sitk.GetArrayFromImage(img)
 
         # loop over entire 3D image stack and add every 2D slice to data
-        for z in range(1, img_arr.shape[2]):
+        for z in range(1, img_arr.shape[2]+1):
             curr_arr2D = img_arr[:,:,z-1:z]
             #img_arr = np.expand_dims(img_arr, axis=2)  # add a fourth dimension
             data[index] = curr_arr2D

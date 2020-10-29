@@ -1,3 +1,6 @@
+'''
+MSD: http://insightsoftwareconsortium.github.io/SimpleITK-Notebooks/Python_html/34_Segmentation_Evaluation.html
+'''
 from SharedMethods import get_dict_of_paths, find_patient_no_in_file_name
 import SimpleITK as sitk
 import os
@@ -6,6 +9,52 @@ import numpy as np
 from openpyxl.styles import Alignment, NamedStyle, Font
 from openpyxl import Workbook
 import openpyxl as op
+
+
+def calculate_surface_distance(gt_img_path, pred_img_path):
+    # load images
+    gt_img = sitk.ReadImage(gt_img_path)
+    pred_img = sitk.ReadImage(pred_img_path)
+
+    # calculate surface distance
+    gt_dist_map = sitk.Abs(sitk.SignedMaurerDistanceMap(gt_img, squaredDistance=False, useImageSpacing=True))
+    pred_dist_map = sitk.Abs(sitk.SignedMaurerDistanceMap(pred_img, squaredDistance=False, useImageSpacing=True))
+
+    gt_surface = sitk.LabelContour(gt_img)
+    pred_surface = sitk.LabelContour(pred_img)
+
+    statistics_image_filter = sitk.StatisticsImageFilter()
+    statistics_image_filter.Execute(gt_surface)
+    num_gt_surface_pixels = int(statistics_image_filter.GetSum())
+    statistics_image_filter.Execute(pred_surface)
+    num_pred_surface_pixels = int(statistics_image_filter.GetSum())
+
+    gt2pred_dist_map =pred_dist_map*sitk.Cast(gt_surface, sitk.sitkFloat32)
+    pred2gt_dist_map =gt_dist_map*sitk.Cast(pred_surface, sitk.sitkFloat32)
+    gt2pred_dist_map_arr = sitk.GetArrayViewFromImage(gt2pred_dist_map)
+    pred2gt_dist_map_arr = sitk.GetArrayViewFromImage(pred2gt_dist_map)
+
+    gt2pred_dist = list(gt2pred_dist_map_arr[gt2pred_dist_map_arr!=0])
+    gt2pred_dist = gt2pred_dist + list(np.zeros(num_gt_surface_pixels - len(gt2pred_dist)))
+
+    pred2gt_dist = list(pred2gt_dist_map_arr[pred2gt_dist_map_arr!=0])
+    pred2gt_dist = pred2gt_dist + list(np.zeros(num_pred_surface_pixels - len(pred2gt_dist)))
+
+    all_dist = pred2gt_dist + gt2pred_dist
+    mean_surface_dist = np.mean(all_dist)
+    max_surface_dist = np.max(all_dist)
+    median_surface_dist = np.median(all_dist)
+    std_surface_dist = np.std(all_dist)
+    '''
+    print("######xxxxxx######")
+    print(mean_surface_dist)
+    print(max_surface_dist)
+    print(median_surface_dist)
+    print(std_surface_dist)
+    '''
+    print("mean surface distance {}".format(mean_surface_dist))
+
+    return mean_surface_dist
 
 
 # returns dice coefficent, mean overlap and volume similarity measurements
@@ -56,12 +105,15 @@ def calculate_mean(results):
     hd = []
     avg_hd = []
     dice = []
+    msd = []
+    surface = []
     #avg_ol = []
     #vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
-        dice.append((result[3]))
+        dice.append(result[3])
+        msd.append(result[4])
         #avg_ol.append(result[4])
         #vs.append(result[5])
 
@@ -69,10 +121,11 @@ def calculate_mean(results):
     mean_hd = np.mean(hd)
     mean_avg_hd = np.mean(avg_hd)
     mean_dice = np.mean(dice)
+    mean_msd = np.mean(msd)
     #mean_avg_ol = np.mean(avg_ol)
     #mean_vs = np.mean(vs)
 
-    mean = ["mean", mean_hd, mean_avg_hd, mean_dice]
+    mean = ["mean", mean_hd, mean_avg_hd, mean_dice, mean_msd]
     return mean
 
 
@@ -81,12 +134,14 @@ def calculate_standard_dv(results):
     hd = []
     avg_hd = []
     dice = []
+    msd = []
     #avg_ol = []
     #vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
-        dice.append((result[3]))
+        dice.append(result[3])
+        msd.append(result[4])
         #avg_ol.append(result[4])
         #vs.append(result[5])
 
@@ -94,10 +149,11 @@ def calculate_standard_dv(results):
     std_hd = np.std(hd)
     std_avg_hd = np.std(avg_hd)
     std_dice = np.std(dice)
+    std_msd = np.std(msd)
     #std_avg_ol = np.std(avg_ol)
     #std_vs = np.std(vs)
 
-    std = ["standard d", std_hd, std_avg_hd, std_dice]
+    std = ["standard d", std_hd, std_avg_hd, std_dice, std_msd]
     return std
 
 
@@ -121,13 +177,14 @@ def evaluate_predictions(pred_path, gt_path):
         print("Patient Number : {}".format(patient_no))
         hd, avg_hd = calculate_hausdorff_distance(gt_img_path, prediction.path)
         dice = calculate_label_overlap_measures(gt_img_path, prediction.path)
+        msd = calculate_surface_distance(gt_img_path, prediction.path)
 
-        results.append([patient_no, hd, avg_hd, dice])
+        results.append([patient_no, hd, avg_hd, dice, msd])
 
     mean = calculate_mean(results)
     std = calculate_standard_dv(results)
 
-    return results, mean, std
+    return results, mean, std, msd
 
 
 '''
@@ -135,16 +192,21 @@ https://realpython.com/openpyxl-excel-spreadsheets-python/
 '''
 
 
-def evaluate(SAVE_PATH, ORGAN, ROUND):
+def evaluate(SAVE_PATH, ORGAN, ROUND, elapsed_time, twoD = False):
+    elapsed = ["elapsed time", elapsed_time, 0.0, 0.0, 0.0]
 
     # open excel sheet
-    wb = load_workbook(filename="{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
+    if(twoD):
+        filename = "{}2DEvaluation {}.xlsx".format(SAVE_PATH, ORGAN)
+    else:
+        filename = "{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN)
+    wb = load_workbook(filename=filename)
     sheet = wb.active
 
     # get metrics
     path_results_orig = "{}results/orig/".format(SAVE_PATH)
     path_y_test_orig = "{}ytest/orig/".format(SAVE_PATH)
-    results, mean, std = evaluate_predictions(path_results_orig, path_y_test_orig)
+    results, mean, std, msd = evaluate_predictions(path_results_orig, path_y_test_orig)
 
     # write metrics into excel
     number_of_results = len(results)
@@ -164,18 +226,25 @@ def evaluate(SAVE_PATH, ORGAN, ROUND):
     # write mean and std also into excel
     mean_row = start_row + number_of_results
     std_row = mean_row + 1
+    elapsed_row = std_row + 1
     for i in range(0, len(mean)):
         col = start_col + i
         if i == 0:
             mean_value = "{}".format(mean[i])
             std_value = "{}".format(std[i])
+            elapsed_value = "{}".format(elapsed[i])
         else:
             mean_value = "{:.2f}".format(mean[i])
             std_value = "{:.2f}".format(std[i])
+            elapsed_value = "{:.2f}".format(elapsed[i])
         sheet.cell(column=col, row=mean_row, value=mean_value)
         sheet.cell(column=col, row=std_row, value=std_value)
+        sheet.cell(column=col, row=elapsed_row, value=elapsed_value)
 
-    wb.save("{}eval/{}_Evaluation {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
+    if(twoD):
+        wb.save("{}eval/{}_Evaluation {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
+    else:
+        wb.save("{}eval/{}_Evaluation {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
 
 
 def summarize_eval(SAVE_PATH, ORGAN):

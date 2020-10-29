@@ -40,8 +40,6 @@ def get_segmentation_masks2D(results, z_stack_length, path_ref_files, target_pat
 
     number_of_images = int(len(results)/z_stack_length)
     for j in range(0, number_of_images):
-        print("J ####################################################")
-        print(j)
         image_index = j
         # get the i-th reference file (patients in ascending order)
         curr_key = sorted(dict_ref_file_paths.keys())[image_index]
@@ -75,7 +73,6 @@ def apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH):
 
     # get test data
     x_test = get_organized_data_train2D(path_x_test_resampled, DIMENSIONS)
-
     # load and apply U-Net on test data and get results in format Width, Height, Depth, Channels
     model = load_model("{}{}U-Net2D.h5".format(SAVE_PATH, ORGAN))
     results = model.predict(x_test, verbose=1)

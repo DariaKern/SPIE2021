@@ -3,6 +3,7 @@ from Prepare import prepare, split_train_and_test
 from Train import train
 from Apply import apply
 from Evaluate import evaluate, summarize_eval
+import time
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
@@ -89,9 +90,12 @@ def run_x_times(times):
             else:
                 thresh = 0.5
             prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, organ, test_set)
+            start = time.time()
             train(SAVE_PATH, DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
+            end = time.time()
+            elapsed_time = end - start
             apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
-            evaluate(SAVE_PATH, organ, number)
+            evaluate(SAVE_PATH, organ, number, elapsed_time)
         #exit()
 
 run_x_times(100)

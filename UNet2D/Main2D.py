@@ -3,6 +3,7 @@ from Prepare2D import prepare2D, split_train_and_test2D
 from Train2D import train2D
 from Apply2D import apply2D
 from Evaluate2D import evaluate2D, summarize_eval2D
+import time
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
@@ -77,10 +78,14 @@ def run_x_times(times):
             else:
                 thresh = 0.5
             prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, PREP_DIMENSIONS, SPLIT, organ, test_set)
-            train2D(SAVE_PATH, PREP_DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
-            apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, PREP_DIMENSIONS, organ, thresh)
-            evaluate2D(SAVE_PATH, organ, number)
-        #exit()
 
-run_x_times(10)
+            start = time.time()
+            train2D(SAVE_PATH, PREP_DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
+            end = time.time()
+            elapsed_time = end - start
+            apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, PREP_DIMENSIONS, organ, thresh)
+            evaluate2D(SAVE_PATH, organ, number, elapsed_time)
+
+
+run_x_times(30)
 

@@ -131,5 +131,5 @@ def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50)
     - start tensorboard first
     tensorboard --logdir=path_to_your_logs
     /home/daria/Desktop/PycharmProjects/U-Net3D_organ_segmentation/logs/
-    tensorboard --logdir=/home/daria/Desktop/PycharmProjects/U-Net3D_organ_segmentation/logs/
+    tensorboard --logdir=/home/daria/Desktop/PycharmProjects/SPIE2021/logs/
     '''

@@ -34,7 +34,7 @@ def split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET=None):
     return test_split, train_split
 
 
-def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split):
+def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split, twoD = False):
     print("creating excel sheet for {} in {}".format(ORGAN, SAVE_PATH))
 
     # create excel sheet
@@ -64,7 +64,7 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split):
     headings_row = '3'
     headings = ["patient #", "hausdorff dist",
                 "Ø hausdorff dist",
-                "dice coeff","-"]
+                "dice coeff","msd"]
     sheet.append(headings)
     for cell in sheet[headings_row]:
         cell.style = headings_style
@@ -78,7 +78,10 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split):
     sheet.column_dimensions['E'].width = column_width
     sheet.column_dimensions['F'].width = column_width
 
-    wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
+    if(twoD):
+        wb.save("{}2DEvaluation {}.xlsx".format(SAVE_PATH, ORGAN))
+    else:
+        wb.save("{}Evaluation {}.xlsx".format(SAVE_PATH, ORGAN))
 
 
 def copy_files_to_folder(folder_path, target_folder_path, patient_number_set):
