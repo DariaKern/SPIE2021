@@ -45,13 +45,16 @@ def calculate_surface_distance(gt_img_path, pred_img_path):
     max_surface_dist = np.max(all_dist)
     median_surface_dist = np.median(all_dist)
     std_surface_dist = np.std(all_dist)
+
     '''
-    print("######xxxxxx######")
+        print("######xxxxxx######")
     print(mean_surface_dist)
     print(max_surface_dist)
     print(median_surface_dist)
     print(std_surface_dist)
+
     '''
+
     print("mean surface distance {}".format(mean_surface_dist))
 
     return mean_surface_dist
@@ -68,13 +71,13 @@ def calculate_label_overlap_measures(gt_img_path, pred_img_path):
     dice_filter.Execute(gt_img, pred_img)
     dice = dice_filter.GetDiceCoefficient()
     #mean_overlap = dice_filter.GetMeanOverlap()
-    #volume_similarity = dice_filter.GetVolumeSimilarity()
+    volume_similarity = dice_filter.GetVolumeSimilarity()
 
     print("dice coefficient {}".format(dice))
     #print("mean overlap {}".format(mean_overlap))
-    #print("volume similarity {}".format(volume_similarity))
+    print("volume similarity {}".format(volume_similarity))
 
-    return dice
+    return dice, volume_similarity
 
 
 # returns hausdorff distance and average hausdorff distance measurements
@@ -108,14 +111,14 @@ def calculate_mean(results):
     msd = []
     surface = []
     #avg_ol = []
-    #vs = []
+    vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
         dice.append(result[3])
         msd.append(result[4])
         #avg_ol.append(result[4])
-        #vs.append(result[5])
+        vs.append(result[5])
 
     # calculate mean of all metrics
     mean_hd = np.mean(hd)
@@ -123,9 +126,9 @@ def calculate_mean(results):
     mean_dice = np.mean(dice)
     mean_msd = np.mean(msd)
     #mean_avg_ol = np.mean(avg_ol)
-    #mean_vs = np.mean(vs)
+    mean_vs = np.mean(vs)
 
-    mean = ["mean", mean_hd, mean_avg_hd, mean_dice, mean_msd]
+    mean = ["mean", mean_hd, mean_avg_hd, mean_dice, mean_msd, mean_vs]
     return mean
 
 
@@ -136,14 +139,14 @@ def calculate_standard_dv(results):
     dice = []
     msd = []
     #avg_ol = []
-    #vs = []
+    vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
         dice.append(result[3])
         msd.append(result[4])
         #avg_ol.append(result[4])
-        #vs.append(result[5])
+        vs.append(result[5])
 
     # calculate std of all metrics
     std_hd = np.std(hd)
@@ -151,9 +154,9 @@ def calculate_standard_dv(results):
     std_dice = np.std(dice)
     std_msd = np.std(msd)
     #std_avg_ol = np.std(avg_ol)
-    #std_vs = np.std(vs)
+    std_vs = np.std(vs)
 
-    std = ["standard d", std_hd, std_avg_hd, std_dice, std_msd]
+    std = ["standard d", std_hd, std_avg_hd, std_dice, std_msd, std_vs]
     return std
 
 
@@ -176,15 +179,15 @@ def evaluate_predictions(pred_path, gt_path):
         print("")
         print("Patient Number : {}".format(patient_no))
         hd, avg_hd = calculate_hausdorff_distance(gt_img_path, prediction.path)
-        dice = calculate_label_overlap_measures(gt_img_path, prediction.path)
+        dice, vs = calculate_label_overlap_measures(gt_img_path, prediction.path)
         msd = calculate_surface_distance(gt_img_path, prediction.path)
 
-        results.append([patient_no, hd, avg_hd, dice, msd])
+        results.append([patient_no, hd, avg_hd, dice, msd, vs])
 
     mean = calculate_mean(results)
     std = calculate_standard_dv(results)
 
-    return results, mean, std, msd
+    return results, mean, std
 
 
 '''
@@ -193,7 +196,7 @@ https://realpython.com/openpyxl-excel-spreadsheets-python/
 
 
 def evaluate(SAVE_PATH, ORGAN, ROUND, elapsed_time, twoD = False):
-    elapsed = ["elapsed time", elapsed_time, 0.0, 0.0, 0.0]
+    elapsed = ["elapsed time", elapsed_time]
 
     # open excel sheet
     if(twoD):
@@ -206,7 +209,7 @@ def evaluate(SAVE_PATH, ORGAN, ROUND, elapsed_time, twoD = False):
     # get metrics
     path_results_orig = "{}results/orig/".format(SAVE_PATH)
     path_y_test_orig = "{}ytest/orig/".format(SAVE_PATH)
-    results, mean, std, msd = evaluate_predictions(path_results_orig, path_y_test_orig)
+    results, mean, std = evaluate_predictions(path_results_orig, path_y_test_orig)
 
     # write metrics into excel
     number_of_results = len(results)
@@ -233,16 +236,19 @@ def evaluate(SAVE_PATH, ORGAN, ROUND, elapsed_time, twoD = False):
             mean_value = "{}".format(mean[i])
             std_value = "{}".format(std[i])
             elapsed_value = "{}".format(elapsed[i])
+        elif i == 1:
+            elapsed_value = "{:.2f}".format(elapsed[i])
         else:
             mean_value = "{:.2f}".format(mean[i])
             std_value = "{:.2f}".format(std[i])
-            elapsed_value = "{:.2f}".format(elapsed[i])
+            elapsed_value = ""
+
         sheet.cell(column=col, row=mean_row, value=mean_value)
         sheet.cell(column=col, row=std_row, value=std_value)
         sheet.cell(column=col, row=elapsed_row, value=elapsed_value)
 
     if(twoD):
-        wb.save("{}eval/{}_Evaluation {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
+        wb.save("{}eval/{}_Evaluation2D {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
     else:
         wb.save("{}eval/{}_Evaluation {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
 

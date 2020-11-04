@@ -11,9 +11,9 @@ def split_train_and_test2D(SCAN_PATH, SPLIT, CUSTOM_TEST_SET=None):
     return test_split, train_split
 
 
-def prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET=None):
+def prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, ORGAN, train_split, test_split):
     # get training data
-    test_split, train_split = split_train_and_test2D(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
+    #test_split, train_split = split_train_and_test2D(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
 
     create_excel_sheet2D(SAVE_PATH, ORGAN, test_split, train_split)
 

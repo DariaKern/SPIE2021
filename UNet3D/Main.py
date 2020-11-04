@@ -4,6 +4,7 @@ from Train import train
 from Apply import apply
 from Evaluate import evaluate, summarize_eval
 import time
+from FiveFoldCrossValidation import run_KfoldCV
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
@@ -52,7 +53,7 @@ VAL_SPLIT = 0.1
 BATCH = 8
 
 # define number of epochs (Default = 50)
-EPOCHS = 100
+EPOCHS = 10
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
 #CUSTOM_TEST_SET = [19]
@@ -70,15 +71,12 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''_____________________________________________________________________________________________'''
 '''|................................METHODS....................................|'''
 '''_____________________________________________________________________________________________'''
-
-#prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET)
-#train(SAVE_PATH, DIMENSIONS, ORGAN, VAL_SPLIT, BATCH, EPOCHS)
-#apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH)
-
+organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
+run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs)
 
 def run_x_times(times):
     for x in range(0, times):
-        number = x
+        number = x + 5
         #custom_test_set = [19]
         #test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT, custom_test_set)
 
@@ -89,7 +87,7 @@ def run_x_times(times):
                 thresh = 0.3
             else:
                 thresh = 0.5
-            prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, organ, test_set)
+            prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, organ, train_set, test_set)
             start = time.time()
             train(SAVE_PATH, DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
             end = time.time()
@@ -98,7 +96,7 @@ def run_x_times(times):
             evaluate(SAVE_PATH, organ, number, elapsed_time)
         #exit()
 
-run_x_times(100)
+#run_x_times(10)
 
 
 #set_direction(in_dir1, out_dir)

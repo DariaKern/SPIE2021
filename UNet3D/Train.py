@@ -93,7 +93,7 @@ def plot_history(history):
     plt.show()
 
 
-def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50):
+def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.0, batch_size=15, epochs=50):
     # get training data
     path_x_train_resampled = "{}Xtrain/resampled/".format(SAVE_PATH)
     path_y_train_resampled = "{}ytrain/resampled/".format(SAVE_PATH)

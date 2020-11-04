@@ -64,7 +64,7 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split, twoD = False):
     headings_row = '3'
     headings = ["patient #", "hausdorff dist",
                 "Ø hausdorff dist",
-                "dice coeff","msd"]
+                "dice coeff","msd", "vs"]
     sheet.append(headings)
     for cell in sheet[headings_row]:
         cell.style = headings_style
@@ -240,9 +240,10 @@ def create_y_test(GT_SEG_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, O
     resample_files(path_y_test_cropped, path_y_test_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
-def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, SPLIT, ORGAN, CUSTOM_TEST_SET=None):
+def prepare(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, ORGAN, train_split, test_split):
     # get training data
-    test_split, train_split = split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
+
+    #test_split, train_split = split_train_and_test(SCAN_PATH, SPLIT, CUSTOM_TEST_SET)
 
     create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split)
 

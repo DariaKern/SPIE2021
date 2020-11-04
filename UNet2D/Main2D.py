@@ -66,7 +66,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 def run_x_times(times):
     for x in range(0, times):
-        number = x
+        number = x + 3
         #custom_test_set = [19,63]
         #test_set, train_set = split_train_and_test2D(SCAN_PATH, SPLIT, custom_test_set)
 
@@ -77,7 +77,7 @@ def run_x_times(times):
                 thresh = 0.3
             else:
                 thresh = 0.5
-            prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, PREP_DIMENSIONS, SPLIT, organ, test_set)
+            prepare2D(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, PREP_DIMENSIONS, organ, train_set, test_set)
 
             start = time.time()
             train2D(SAVE_PATH, PREP_DIMENSIONS, organ, VAL_SPLIT, BATCH, EPOCHS)
