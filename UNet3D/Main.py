@@ -2,9 +2,9 @@ import tensorflow as tf
 from Prepare import prepare, split_train_and_test
 from Train import train
 from Apply import apply
-from Evaluate import evaluate, summarize_eval
+from Evaluate import evaluate
 import time
-from KFoldCrossValidation import run_KfoldCV
+from KFoldCrossValidation import run_KfoldCV, summarize_eval
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
@@ -53,7 +53,7 @@ VAL_SPLIT = 0.1
 BATCH = 8
 
 # define number of epochs (Default = 50)
-EPOCHS = 10
+EPOCHS = 50
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
 #CUSTOM_TEST_SET = [19]
@@ -73,6 +73,9 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''_____________________________________________________________________________________________'''
 organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
 run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs)
+#path = "/home/daria/Desktop/Data/Daria/EVAL/8/3D/"
+#for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
+    #summarize_eval(path, organ)
 
 def run_x_times(times):
     for x in range(0, times):

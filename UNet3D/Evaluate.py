@@ -6,58 +6,21 @@ import SimpleITK as sitk
 import os
 from openpyxl import load_workbook
 import numpy as np
-from openpyxl.styles import Alignment, NamedStyle, Font
-from openpyxl import Workbook
-import openpyxl as op
+from medpy import metric
 
 
-def calculate_surface_distance(gt_img_path, pred_img_path):
+def calculate_average_surface_distance(gt_img_path, pred_img_path):
     # load images
     gt_img = sitk.ReadImage(gt_img_path)
     pred_img = sitk.ReadImage(pred_img_path)
 
-    # calculate surface distance
-    gt_dist_map = sitk.Abs(sitk.SignedMaurerDistanceMap(gt_img, squaredDistance=False, useImageSpacing=True))
-    pred_dist_map = sitk.Abs(sitk.SignedMaurerDistanceMap(pred_img, squaredDistance=False, useImageSpacing=True))
+    # get arrays
+    gt_img_arr = sitk.GetArrayFromImage(gt_img)
+    pred_img_arr = sitk.GetArrayFromImage(pred_img)
 
-    gt_surface = sitk.LabelContour(gt_img)
-    pred_surface = sitk.LabelContour(pred_img)
-
-    statistics_image_filter = sitk.StatisticsImageFilter()
-    statistics_image_filter.Execute(gt_surface)
-    num_gt_surface_pixels = int(statistics_image_filter.GetSum())
-    statistics_image_filter.Execute(pred_surface)
-    num_pred_surface_pixels = int(statistics_image_filter.GetSum())
-
-    gt2pred_dist_map =pred_dist_map*sitk.Cast(gt_surface, sitk.sitkFloat32)
-    pred2gt_dist_map =gt_dist_map*sitk.Cast(pred_surface, sitk.sitkFloat32)
-    gt2pred_dist_map_arr = sitk.GetArrayViewFromImage(gt2pred_dist_map)
-    pred2gt_dist_map_arr = sitk.GetArrayViewFromImage(pred2gt_dist_map)
-
-    gt2pred_dist = list(gt2pred_dist_map_arr[gt2pred_dist_map_arr!=0])
-    gt2pred_dist = gt2pred_dist + list(np.zeros(num_gt_surface_pixels - len(gt2pred_dist)))
-
-    pred2gt_dist = list(pred2gt_dist_map_arr[pred2gt_dist_map_arr!=0])
-    pred2gt_dist = pred2gt_dist + list(np.zeros(num_pred_surface_pixels - len(pred2gt_dist)))
-
-    all_dist = pred2gt_dist + gt2pred_dist
-    mean_surface_dist = np.mean(all_dist)
-    max_surface_dist = np.max(all_dist)
-    median_surface_dist = np.median(all_dist)
-    std_surface_dist = np.std(all_dist)
-
-    '''
-        print("######xxxxxx######")
-    print(mean_surface_dist)
-    print(max_surface_dist)
-    print(median_surface_dist)
-    print(std_surface_dist)
-
-    '''
-
-    print("mean surface distance {}".format(mean_surface_dist))
-
-    return mean_surface_dist
+    asd = metric.binary.asd(pred_img_arr, gt_img_arr, voxelspacing=2.0)
+    print("asd {}".format(asd))
+    return asd
 
 
 # returns dice coefficent, mean overlap and volume similarity measurements
@@ -71,13 +34,13 @@ def calculate_label_overlap_measures(gt_img_path, pred_img_path):
     dice_filter.Execute(gt_img, pred_img)
     dice = dice_filter.GetDiceCoefficient()
     #mean_overlap = dice_filter.GetMeanOverlap()
-    volume_similarity = dice_filter.GetVolumeSimilarity()
+    #volume_similarity = dice_filter.GetVolumeSimilarity()
 
-    print("dice coefficient {}".format(dice))
+    print("dice {}".format(dice))
     #print("mean overlap {}".format(mean_overlap))
-    print("volume similarity {}".format(volume_similarity))
+    #print("volume similarity {}".format(volume_similarity))
 
-    return dice, volume_similarity
+    return dice #, volume_similarity
 
 
 # returns hausdorff distance and average hausdorff distance measurements
@@ -97,8 +60,8 @@ def calculate_hausdorff_distance(gt_img_path, pred_img_path):
         avg_hd = 0
         hd = 0
 
-    print("hausdorff distance {}".format(hd))
-    print("average hausdorff distance {}".format(avg_hd))
+    print("hd {}".format(hd))
+    print("avd {}".format(avg_hd))
 
     return hd, avg_hd
 
@@ -108,27 +71,30 @@ def calculate_mean(results):
     hd = []
     avg_hd = []
     dice = []
-    msd = []
+    #asd = []
+    #msd = []
     surface = []
     #avg_ol = []
-    vs = []
+    #vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
         dice.append(result[3])
-        msd.append(result[4])
+        #asd.append(result[4])
+        #msd.append(result[4])
         #avg_ol.append(result[4])
-        vs.append(result[5])
+        #vs.append(result[5])
 
     # calculate mean of all metrics
     mean_hd = np.mean(hd)
     mean_avg_hd = np.mean(avg_hd)
     mean_dice = np.mean(dice)
-    mean_msd = np.mean(msd)
+    #mean_asd = np.mean(asd)
+    #mean_msd = np.mean(msd)
     #mean_avg_ol = np.mean(avg_ol)
-    mean_vs = np.mean(vs)
+    #mean_vs = np.mean(vs)
 
-    mean = ["mean", mean_hd, mean_avg_hd, mean_dice, mean_msd, mean_vs]
+    mean = ["mean", mean_hd, mean_avg_hd, mean_dice]
     return mean
 
 
@@ -137,26 +103,29 @@ def calculate_standard_dv(results):
     hd = []
     avg_hd = []
     dice = []
-    msd = []
+    #asd = []
+    #msd = []
     #avg_ol = []
-    vs = []
+    #vs = []
     for result in results:
         hd.append(result[1])
         avg_hd.append(result[2])
         dice.append(result[3])
-        msd.append(result[4])
+        #asd.append(result[4])
+        #msd.append(result[4])
         #avg_ol.append(result[4])
-        vs.append(result[5])
+        #vs.append(result[5])
 
     # calculate std of all metrics
     std_hd = np.std(hd)
     std_avg_hd = np.std(avg_hd)
     std_dice = np.std(dice)
-    std_msd = np.std(msd)
+    #std_asd = np.std(asd)
+    #std_msd = np.std(msd)
     #std_avg_ol = np.std(avg_ol)
-    std_vs = np.std(vs)
+    #std_vs = np.std(vs)
 
-    std = ["standard d", std_hd, std_avg_hd, std_dice, std_msd, std_vs]
+    std = ["standard d", std_hd, std_avg_hd, std_dice]
     return std
 
 
@@ -179,10 +148,11 @@ def evaluate_predictions(pred_path, gt_path):
         print("")
         print("Patient Number : {}".format(patient_no))
         hd, avg_hd = calculate_hausdorff_distance(gt_img_path, prediction.path)
-        dice, vs = calculate_label_overlap_measures(gt_img_path, prediction.path)
-        msd = calculate_surface_distance(gt_img_path, prediction.path)
+        dice = calculate_label_overlap_measures(gt_img_path, prediction.path)
+        #asd = calculate_average_surface_distance(gt_img_path, prediction.path)
+        #msd = calculate_surface_distance(gt_img_path, prediction.path)
 
-        results.append([patient_no, hd, avg_hd, dice, msd, vs])
+        results.append([patient_no, hd, avg_hd, dice])
 
     mean = calculate_mean(results)
     std = calculate_standard_dv(results)
@@ -237,6 +207,8 @@ def evaluate(SAVE_PATH, ORGAN, ROUND, elapsed_time, twoD = False):
             std_value = "{}".format(std[i])
             elapsed_value = "{}".format(elapsed[i])
         elif i == 1:
+            mean_value = "{:.2f}".format(mean[i])
+            std_value = "{:.2f}".format(std[i])
             elapsed_value = "{:.2f}".format(elapsed[i])
         else:
             mean_value = "{:.2f}".format(mean[i])
@@ -252,58 +224,3 @@ def evaluate(SAVE_PATH, ORGAN, ROUND, elapsed_time, twoD = False):
     else:
         wb.save("{}eval/{}_Evaluation {}.xlsx".format(SAVE_PATH, ROUND, ORGAN))
 
-
-def summarize_eval(SAVE_PATH, ORGAN):
-    # create excel sheet
-    eval_wb = Workbook()
-    eval_sheet = eval_wb.active
-    eval_sheet.title = "summarize eval"
-
-    # create headings and apply style
-    headings_style = NamedStyle(
-        name="daria",
-        font=Font(color='000000', bold=True),
-        alignment=Alignment(horizontal='left')
-    )
-    headings_row = '1'
-    headings = ["file #", "mean dice coeff",
-                "standard d."]
-    eval_sheet.append(headings)
-    for cell in eval_sheet[headings_row]:
-        cell.style = headings_style
-
-    # make cells wider
-    eval_sheet.column_dimensions['A'].width = 50
-    eval_sheet.column_dimensions['B'].width = 20
-    eval_sheet.column_dimensions['C'].width = 20
-
-    mean_dice_row = 24
-    mean_standard_d_row = 25
-    relevant_col = 4
-
-    curr_row = 2
-    curr_col = 1
-
-    path = "{}eval/".format(SAVE_PATH)
-    for file in os.scandir(path):
-        found = file.name.find(ORGAN)
-        if found is not -1:
-            # open
-            wb_obj = op.load_workbook(file)
-            # get active sheet
-            sheet_obj = wb_obj.active
-            # read cell
-            cell_mean_dice = sheet_obj.cell(row=mean_dice_row, column=relevant_col)
-            cell_standard_d = sheet_obj.cell(row=mean_standard_d_row, column=relevant_col)
-            # get value
-            mean_dice = cell_mean_dice.value
-            standard_d = cell_standard_d.value
-
-            # write into evaluation summary sheet
-            eval_sheet.cell(column=curr_col, row=curr_row, value=file.name)  # name
-            eval_sheet.cell(column=curr_col+1, row=curr_row, value=mean_dice)
-            eval_sheet.cell(column=curr_col+2, row=curr_row, value=standard_d)
-
-            curr_row = curr_row+1
-
-    eval_wb.save("{}Evaluation Summary {}.xlsx".format(SAVE_PATH, ORGAN))

@@ -62,9 +62,9 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split, twoD = False):
         alignment=Alignment(horizontal='left')
     )
     headings_row = '3'
-    headings = ["patient #", "hausdorff dist",
-                "Ø hausdorff dist",
-                "dice coeff","msd", "vs"]
+    headings = ["patient #", "hd",
+                "avd",
+                "dice"]
     sheet.append(headings)
     for cell in sheet[headings_row]:
         cell.style = headings_style
@@ -76,7 +76,6 @@ def create_excel_sheet(SAVE_PATH, ORGAN, test_split, train_split, twoD = False):
     sheet.column_dimensions['C'].width = column_width
     sheet.column_dimensions['D'].width = column_width
     sheet.column_dimensions['E'].width = column_width
-    sheet.column_dimensions['F'].width = column_width
 
     if(twoD):
         wb.save("{}2DEvaluation {}.xlsx".format(SAVE_PATH, ORGAN))

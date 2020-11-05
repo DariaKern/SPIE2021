@@ -6,7 +6,7 @@ import tensorflow as tf
 from UNet3D.Prepare import prepare
 from UNet3D.Train import train
 from UNet3D.Apply import apply
-from UNet3D.Evaluate import evaluate, summarize_eval
+from UNet3D.Evaluate import evaluate
 from UNet2D.Prepare2D import create_excel_sheet2D
 from UNet2D.Train2D import train2D
 from UNet2D.Apply2D import apply2D
@@ -34,8 +34,12 @@ def get_files_in_path(path):
 
     return all_patient_numbers_arr, amount_patients
 
-#TODO
-def write_kfold_into_file(parts):
+
+def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs):
+    kfold = KFold(5, True, 1)
+    data, amount_patients = get_files_in_path(SCAN_PATH)
+    parts = kfold.split(data)
+
     number = 0
     for train_set, test_set in parts:
         print("#{} train set: {} files".format(number, len(train_set)))
@@ -43,16 +47,7 @@ def write_kfold_into_file(parts):
         print("#{} test set: {} files".format(number, len(test_set)))
         print(test_set)
         print("")
-        number = number + 1
 
-def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs):
-    kfold = KFold(5, True, 1)
-    data, amount_patients = get_files_in_path(SCAN_PATH)
-    parts = kfold.split(data)
-    write_kfold_into_file(parts)
-
-    number = 0
-    for train_set, test_set in parts:
         number = number + 1
         for organ in organs:
             if organ == 'pancreas':
@@ -82,7 +77,6 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
             evaluate2D(SAVE_PATH, organ, number, elapsed_time)
 
 
-#TODO
 def summarize_eval(SAVE_PATH, ORGAN):
     # create excel sheet
     eval_wb = Workbook()
@@ -96,8 +90,10 @@ def summarize_eval(SAVE_PATH, ORGAN):
         alignment=Alignment(horizontal='left')
     )
     headings_row = '1'
-    headings = ["file #", "mean dice coeff",
-                "standard d."]
+    headings = ["file #", "mean hd",
+                "std", "mean avd",
+                "std", "mean dice",
+                "std", "time"]
     eval_sheet.append(headings)
     for cell in eval_sheet[headings_row]:
         cell.style = headings_style
@@ -106,15 +102,28 @@ def summarize_eval(SAVE_PATH, ORGAN):
     eval_sheet.column_dimensions['A'].width = 50
     eval_sheet.column_dimensions['B'].width = 20
     eval_sheet.column_dimensions['C'].width = 20
+    eval_sheet.column_dimensions['D'].width = 20
+    eval_sheet.column_dimensions['E'].width = 20
+    eval_sheet.column_dimensions['F'].width = 20
+    eval_sheet.column_dimensions['G'].width = 20
+    eval_sheet.column_dimensions['H'].width = 20
 
-    mean_dice_row = 24
-    mean_standard_d_row = 25
-    relevant_col = 4
+    mean_dice_row = 20
+    mean_standard_d_row = 21
+    mean_avd_row = 20
+    mean_standard_avd_row = 21
+    mean_hd_row = 20
+    mean_standard_hd_row = 21
+    #mean_asd_row = 20
+    #mean_standard_asd_row = 21
+    mean_time_row = 22
+
+    relevant_col = 2
 
     curr_row = 2
     curr_col = 1
 
-    path = "{}eval/".format(SAVE_PATH)
+    path = SAVE_PATH
     for file in os.scandir(path):
         found = file.name.find(ORGAN)
         if found is not -1:
@@ -122,17 +131,53 @@ def summarize_eval(SAVE_PATH, ORGAN):
             wb_obj = op.load_workbook(file)
             # get active sheet
             sheet_obj = wb_obj.active
-            # read cell
+
+            # read cells
+            #DICE
             cell_mean_dice = sheet_obj.cell(row=mean_dice_row, column=relevant_col)
             cell_standard_d = sheet_obj.cell(row=mean_standard_d_row, column=relevant_col)
-            # get value
+            #AVD
+            cell_mean_avd = sheet_obj.cell(row=mean_avd_row, column=relevant_col+1)
+            cell_standard_avd = sheet_obj.cell(row=mean_standard_avd_row, column=relevant_col+1)
+            #HD
+            cell_mean_hd = sheet_obj.cell(row=mean_hd_row, column=relevant_col+2)
+            cell_standard_hd = sheet_obj.cell(row=mean_standard_hd_row, column=relevant_col+2)
+            #ASD
+            #cell_mean_asd = sheet_obj.cell(row=mean_asd_row, column=relevant_col+3)
+            #cell_standard_asd = sheet_obj.cell(row=mean_standard_asd_row, column=relevant_col+3)
+            #TIME
+            cell_mean_time = sheet_obj.cell(row=mean_time_row, column=relevant_col)
+
+
+            # get values
             mean_dice = cell_mean_dice.value
             standard_d = cell_standard_d.value
+            mean_avd = cell_mean_avd.value
+            standard_avd = cell_standard_avd.value
+            mean_hd = cell_mean_hd.value
+            standard_hd = cell_standard_hd.value
+            #mean_asd = cell_mean_asd.value
+            #standard_asd = cell_standard_asd.value
+            mean_time = cell_mean_time.value
+
 
             # write into evaluation summary sheet
-            eval_sheet.cell(column=curr_col, row=curr_row, value=file.name)  # name
+            patient_no = find_patient_no_in_file_name(file.name)
+            #DICE
+            eval_sheet.cell(column=curr_col, row=curr_row, value=patient_no)
             eval_sheet.cell(column=curr_col+1, row=curr_row, value=mean_dice)
             eval_sheet.cell(column=curr_col+2, row=curr_row, value=standard_d)
+            #AVD
+            eval_sheet.cell(column=curr_col+3, row=curr_row, value=mean_avd)
+            eval_sheet.cell(column=curr_col+4, row=curr_row, value=standard_avd)
+            #HD
+            eval_sheet.cell(column=curr_col+5, row=curr_row, value=mean_hd)
+            eval_sheet.cell(column=curr_col+6, row=curr_row, value=standard_hd)
+            #ASD
+            #eval_sheet.cell(column=curr_col+7, row=curr_row, value=mean_asd)
+            #eval_sheet.cell(column=curr_col+8, row=curr_row, value=standard_asd)
+            #TIME
+            eval_sheet.cell(column=curr_col+7, row=curr_row, value=mean_time)
 
             curr_row = curr_row+1
 
