@@ -50,14 +50,9 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
     data, amount_patients = get_files_in_path(SCAN_PATH)
     parts = kfold.split(data)
     write_kfold_into_file(parts)
-    exit()
+
     number = 0
     for train_set, test_set in parts:
-        print("train set {}".format(len(train_set)))
-        print(train_set)
-        print("test set {}".format(len(test_set)))
-        print(test_set)
-        exit()
         number = number + 1
         for organ in organs:
             if organ == 'pancreas':

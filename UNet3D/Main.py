@@ -4,7 +4,7 @@ from Train import train
 from Apply import apply
 from Evaluate import evaluate, summarize_eval
 import time
-from FiveFoldCrossValidation import run_KfoldCV
+from KFoldCrossValidation import run_KfoldCV
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
