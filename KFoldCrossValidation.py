@@ -66,7 +66,7 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
 
             apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
             evaluate(SAVE_PATH, organ, number, elapsed_time)
-
+            #exit()
             # 2D
             start = time.time()
             train2D(SAVE_PATH, DIMENSIONS, organ, 0.0, BATCH, EPOCHS)
@@ -124,6 +124,13 @@ def summarize_eval(SAVE_PATH, ORGAN):
     curr_col = 1
 
     path = SAVE_PATH
+    all_dice = []
+    all_dice_std = []
+    all_hd = []
+    all_hd_std = []
+    all_avd = []
+    all_avd_std = []
+    all_time = []
     for file in os.scandir(path):
         found = file.name.find(ORGAN)
         if found is not -1:
@@ -133,15 +140,15 @@ def summarize_eval(SAVE_PATH, ORGAN):
             sheet_obj = wb_obj.active
 
             # read cells
-            #DICE
-            cell_mean_dice = sheet_obj.cell(row=mean_dice_row, column=relevant_col)
-            cell_standard_d = sheet_obj.cell(row=mean_standard_d_row, column=relevant_col)
+            # HD
+            cell_mean_hd = sheet_obj.cell(row=mean_hd_row, column=relevant_col)
+            cell_standard_hd = sheet_obj.cell(row=mean_standard_hd_row, column=relevant_col)
             #AVD
             cell_mean_avd = sheet_obj.cell(row=mean_avd_row, column=relevant_col+1)
             cell_standard_avd = sheet_obj.cell(row=mean_standard_avd_row, column=relevant_col+1)
-            #HD
-            cell_mean_hd = sheet_obj.cell(row=mean_hd_row, column=relevant_col+2)
-            cell_standard_hd = sheet_obj.cell(row=mean_standard_hd_row, column=relevant_col+2)
+            #DICE
+            cell_mean_dice = sheet_obj.cell(row=mean_dice_row, column=relevant_col+2)
+            cell_standard_d = sheet_obj.cell(row=mean_standard_d_row, column=relevant_col+2)
             #ASD
             #cell_mean_asd = sheet_obj.cell(row=mean_asd_row, column=relevant_col+3)
             #cell_standard_asd = sheet_obj.cell(row=mean_standard_asd_row, column=relevant_col+3)
@@ -160,19 +167,26 @@ def summarize_eval(SAVE_PATH, ORGAN):
             #standard_asd = cell_standard_asd.value
             mean_time = cell_mean_time.value
 
+            all_dice.append(mean_dice)
+            all_dice_std.append(standard_d)
+            all_avd.append(mean_avd)
+            all_avd_std.append(standard_avd)
+            all_hd.append(mean_hd)
+            all_hd_std.append(standard_hd)
+            all_time.append(mean_time)
 
             # write into evaluation summary sheet
             patient_no = find_patient_no_in_file_name(file.name)
-            #DICE
             eval_sheet.cell(column=curr_col, row=curr_row, value=patient_no)
-            eval_sheet.cell(column=curr_col+1, row=curr_row, value=mean_dice)
-            eval_sheet.cell(column=curr_col+2, row=curr_row, value=standard_d)
+            #HD
+            eval_sheet.cell(column=curr_col+1, row=curr_row, value=mean_hd)
+            eval_sheet.cell(column=curr_col+2, row=curr_row, value=standard_hd)
             #AVD
             eval_sheet.cell(column=curr_col+3, row=curr_row, value=mean_avd)
             eval_sheet.cell(column=curr_col+4, row=curr_row, value=standard_avd)
-            #HD
-            eval_sheet.cell(column=curr_col+5, row=curr_row, value=mean_hd)
-            eval_sheet.cell(column=curr_col+6, row=curr_row, value=standard_hd)
+            #DICE
+            eval_sheet.cell(column=curr_col+5, row=curr_row, value=mean_dice)
+            eval_sheet.cell(column=curr_col+6, row=curr_row, value=standard_d)
             #ASD
             #eval_sheet.cell(column=curr_col+7, row=curr_row, value=mean_asd)
             #eval_sheet.cell(column=curr_col+8, row=curr_row, value=standard_asd)
@@ -181,4 +195,154 @@ def summarize_eval(SAVE_PATH, ORGAN):
 
             curr_row = curr_row+1
 
+    print(all_dice)
+    all_dice = list(map(float, all_dice))
+    print(all_dice)
+    avg_all_dice = np.mean(all_dice)
+    print(avg_all_dice)
+
+    all_dice_std = list(map(float, all_dice_std))
+    avg_all_dice_std = np.mean(all_dice_std)
+    all_avd = list(map(float, all_avd))
+    avg_all_avd = np.mean(all_avd)
+    all_avd_std = list(map(float, all_avd_std))
+    avg_all_avd_std = np.mean(all_avd_std)
+    all_hd = list(map(float, all_hd))
+    avg_all_hd = np.mean(all_hd)
+    all_hd_std = list(map(float, all_hd_std))
+    avg_all_hd_std = np.mean(all_hd_std)
+    all_time = list(map(float, all_time))
+    avg_all_time = np.mean(all_time)
+
+    curr_col = 2
+    curr_row = 7
+
+    eval_sheet.cell(column=curr_col, row=curr_row, value=avg_all_hd)
+    eval_sheet.cell(column=curr_col+1, row=curr_row, value=avg_all_hd_std)
+
+    eval_sheet.cell(column=curr_col+2, row=curr_row, value=avg_all_avd)
+    eval_sheet.cell(column=curr_col+3, row=curr_row, value=avg_all_avd_std)
+
+    eval_sheet.cell(column=curr_col+4, row=curr_row, value=avg_all_dice)
+    eval_sheet.cell(column=curr_col+5, row=curr_row, value=avg_all_dice_std)
+
+    eval_sheet.cell(column=curr_col+6, row=curr_row, value=avg_all_time)
+
+
+
+
     eval_wb.save("{}Evaluation Summary {}.xlsx".format(SAVE_PATH, ORGAN))
+
+
+def summarize_metrics(SAVE_PATH, metric):
+    organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
+
+    # create excel sheet
+    eval_wb = Workbook()
+    eval_sheet = eval_wb.active
+
+    eval_sheet.title = "summarize {}".format(metric)
+
+    # create headings and apply style
+    headings_style = NamedStyle(
+        name="daria",
+        font=Font(color='000000', bold=True),
+        alignment=Alignment(horizontal='left')
+    )
+    headings_row = '1'
+    headings = ["file #", "liver 3D",
+                "liver 2D", "r. kidney 3D",
+                "r. kidney 2D", "l. kidney 3D",
+                "l. kidney 2D", "spleen 3D",
+                "spleen 2D", "pancreas 3D",
+                "pancreas 2D"]
+    eval_sheet.append(headings)
+    for cell in eval_sheet[headings_row]:
+        cell.style = headings_style
+
+    # make cells wider
+    #eval_sheet.column_dimensions['A'].width = 50
+    eval_sheet.column_dimensions['B'].width = 20
+    eval_sheet.column_dimensions['C'].width = 20
+    eval_sheet.column_dimensions['D'].width = 20
+    eval_sheet.column_dimensions['E'].width = 20
+    eval_sheet.column_dimensions['F'].width = 20
+    eval_sheet.column_dimensions['G'].width = 20
+    eval_sheet.column_dimensions['H'].width = 20
+    eval_sheet.column_dimensions['I'].width = 20
+    eval_sheet.column_dimensions['J'].width = 20
+    eval_sheet.column_dimensions['K'].width = 20
+
+    dice_row = 4
+    if metric == "dice":
+        dice_col = 4
+    elif metric == "hd":
+        dice_col = 2
+    elif metric == "avd":
+        dice_col = 3
+
+    path = SAVE_PATH
+
+    for ORGAN in organs:
+        for file in os.scandir(path):
+            all_dice = []
+            all_patient_no = []
+            found = file.name.find(ORGAN)
+            if found is not -1:
+                # open
+                wb_obj = op.load_workbook(file)
+                # get active sheet
+                sheet_obj = wb_obj.active
+
+                for i in range(0, 16):
+                    # read cells
+
+                    cell_dice = sheet_obj.cell(row=dice_row+i, column=dice_col)
+                    cell_patient_no = sheet_obj.cell(row=dice_row+i, column=1)
+
+                    # get values
+                    dice = cell_dice.value
+                    patient_no = cell_patient_no.value
+                    all_dice.append(dice)
+                    all_patient_no.append(patient_no)
+                print(file.name)
+                print(all_dice)
+                print(all_patient_no)
+
+                # write into evaluation summary sheet
+                file_no_1 = file.name.find("1_")
+                file_no_2 = file.name.find("2_")
+                file_no_3 = file.name.find("3_")
+                file_no_4 = file.name.find("4_")
+                file_no_5 = file.name.find("5_")
+
+                if file_no_1 is not -1:
+                    curr_row = 2
+                elif file_no_2 is not -1:
+                    curr_row = 18
+                elif file_no_3 is not -1:
+                    curr_row = 34
+                elif file_no_4 is not -1:
+                    curr_row = 50
+                elif file_no_5 is not -1:
+                    curr_row = 66
+
+                switcher = {
+                    "liver": 2,
+                    "left_kidney": 6,
+                    "right_kidney": 4,
+                    "spleen": 8,
+                    "pancreas": 10
+                }
+                curr_col = switcher.get(ORGAN)
+                found2 = file.name.find("Evaluation2D")
+                if found2 is not -1:
+                    curr_col = curr_col + 1
+
+                for j in range(0, 16):
+                    #DICE
+                    eval_sheet.cell(column=curr_col, row=curr_row+j, value=all_dice[j])
+                    eval_sheet.cell(column=1, row=curr_row+j, value=all_patient_no[j])
+
+
+    eval_wb.save("{}{} Summary.xlsx".format(SAVE_PATH, metric))

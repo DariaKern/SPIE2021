@@ -4,7 +4,7 @@ from Train import train
 from Apply import apply
 from Evaluate import evaluate
 import time
-from KFoldCrossValidation import run_KfoldCV, summarize_eval
+from KFoldCrossValidation import run_KfoldCV, summarize_eval, summarize_metrics
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
@@ -32,7 +32,7 @@ SAVE_PATH = "/Data/Daria/DATA/"
 # organ to segment (NEEDED)
 # INFO: DELETE X train, X, test, y train and y test before switching to another organ
 # choose from 'liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas'
-ORGAN = "liver"
+ORGAN = "pancreas"
 
 # define train-test split (NEEDED)
 # 0.00 (0%) - 1.00 (100%) percentage of test files among All files
@@ -47,13 +47,13 @@ DIMENSIONS = [96, 96, 96, 1]
 
 # define validation split  (Default = 0.1)
 # 0.00 (0%) - 1.00 (100%) percentage of validation files among Test files
-VAL_SPLIT = 0.1
+VAL_SPLIT = 0.0
 
 # define batch size (Default = 15)
 BATCH = 8
 
 # define number of epochs (Default = 50)
-EPOCHS = 50
+EPOCHS = 100
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
 #CUSTOM_TEST_SET = [19]
@@ -72,10 +72,16 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''|................................METHODS....................................|'''
 '''_____________________________________________________________________________________________'''
 organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
+#organs = ['pancreas']
 run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs)
-#path = "/home/daria/Desktop/Data/Daria/EVAL/8/3D/"
-#for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
+#path = "/home/daria/Desktop/Data/Daria/EVAL/8/200 Epochs/3D/"
+#for organ in organs:
     #summarize_eval(path, organ)
+#summarize_metrics(path, "dice")
+#summarize_metrics(path, "avd")
+#summarize_metrics(path, "hd")
+
+
 
 def run_x_times(times):
     for x in range(0, times):
@@ -84,8 +90,8 @@ def run_x_times(times):
         #test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT, custom_test_set)
 
         test_set, train_set = split_train_and_test(SCAN_PATH, SPLIT)
-        for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
-        #for organ in ['liver']:
+        #for organ in ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']:
+        for organ in ['pancreas']:
             if organ == 'pancreas':
                 thresh = 0.3
             else:

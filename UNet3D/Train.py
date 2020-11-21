@@ -121,7 +121,7 @@ def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50)
 
     # generate image with model architecture and show training history
     #plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)
-    plot_history(history)
+    #plot_history(history)
 
     #INFO: save U-Net non needed for early stopping already saves the best model
     architecture.save('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN))

@@ -10,6 +10,7 @@ import tensorflow as tf
 from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint
 from SharedMethods2D import get_organized_data_train2D
 import shutil
+from UNet3D import Train
 
 
 
@@ -103,7 +104,7 @@ def train2D(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=5
                         #callbacks= [cb_tensorboard]
                         #callbacks=[cb_earlystopper, cb_checkpointer, cb_tensorboard]
                                )
-
+    Train.plot_history(history)
 
     # generate image with model architecture and show training history
     #plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)

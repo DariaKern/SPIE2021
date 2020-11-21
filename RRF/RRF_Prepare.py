@@ -74,7 +74,7 @@ def create_gt_bb_alternative(GT_SEG_PATH, GT_BB_PATH):
         # load original image
         orig_img = sitk.ReadImage("{}{}".format(GT_SEG_PATH, file.name))
 
-        for organ in [6, 3, 2, 1, 10]:
+        for organ in [6, 3, 2, 1, 11]:
             # get start index and size of organ
             lsi_filter = sitk.LabelShapeStatisticsImageFilter()
             lsi_filter.SetComputeOrientedBoundingBox(True)
