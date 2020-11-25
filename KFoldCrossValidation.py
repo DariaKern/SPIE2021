@@ -35,7 +35,7 @@ def get_files_in_path(path):
     return all_patient_numbers_arr, amount_patients
 
 
-def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs):
+def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction):
     kfold = KFold(5, True, 1)
     data, amount_patients = get_files_in_path(SCAN_PATH)
     parts = kfold.split(data)
@@ -60,20 +60,20 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
 
             # 3D
             start = time.time()
-            train(SAVE_PATH, DIMENSIONS, organ, 0.0, BATCH, EPOCHS)
+            #train(SAVE_PATH, DIMENSIONS, organ, 0.0, BATCH, EPOCHS)
             end = time.time()
             elapsed_time = end - start
 
-            apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
-            evaluate(SAVE_PATH, organ, number, elapsed_time)
+            #apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
+            #evaluate(SAVE_PATH, organ, number, elapsed_time)
             #exit()
             # 2D
             start = time.time()
-            train2D(SAVE_PATH, DIMENSIONS, organ, 0.0, BATCH, EPOCHS)
+            train2D(SAVE_PATH, DIMENSIONS, organ, direction, 0.0, BATCH, EPOCHS)
             end = time.time()
             elapsed_time = end - start
 
-            apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
+            apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh, direction)
             evaluate2D(SAVE_PATH, organ, number, elapsed_time)
 
 

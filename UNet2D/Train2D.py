@@ -81,12 +81,12 @@ def generate_U_Net2D(IMG_WIDTH, IMG_HEIGHT, IMG_CHANNELS):
     return model
 
 
-def train2D(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50):
+def train2D(SAVE_PATH, DIMENSIONS, ORGAN, direction, val_split=0.1, batch_size=15, epochs=50):
     # get training data
     path_x_train_resampled = "{}Xtrain/resampled/".format(SAVE_PATH)
     path_y_train_resampled = "{}ytrain/resampled/".format(SAVE_PATH)
-    x_train = get_organized_data_train2D(path_x_train_resampled, DIMENSIONS)
-    y_train = get_organized_data_train2D(path_y_train_resampled, DIMENSIONS, True)
+    x_train = get_organized_data_train2D(path_x_train_resampled, DIMENSIONS, direction, False)
+    y_train = get_organized_data_train2D(path_y_train_resampled, DIMENSIONS, direction, True)
 
     # generate the 2D U-Net model (Width, Height, Channels)
     architecture = generate_U_Net2D(DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[3])
@@ -104,7 +104,7 @@ def train2D(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=5
                         #callbacks= [cb_tensorboard]
                         #callbacks=[cb_earlystopper, cb_checkpointer, cb_tensorboard]
                                )
-    Train.plot_history(history)
+    #Train.plot_history(history)
 
     # generate image with model architecture and show training history
     #plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)

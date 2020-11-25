@@ -72,8 +72,9 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''|................................METHODS....................................|'''
 '''_____________________________________________________________________________________________'''
 organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
-#organs = ['pancreas']
-run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs)
+direction= "axial"
+#organs = ['liver']
+run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction)
 #path = "/home/daria/Desktop/Data/Daria/EVAL/8/200 Epochs/3D/"
 #for organ in organs:
     #summarize_eval(path, organ)

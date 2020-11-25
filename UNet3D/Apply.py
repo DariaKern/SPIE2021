@@ -23,6 +23,7 @@ def get_segmentation_mask(img_arr, organ, thresh):
     max_val= 0
 
     # loop over every voxel and create segmentation mask
+    #'''
     for x in range(img_arr.shape[0]):
         for y in range(img_arr.shape[1]):
             for z in range(img_arr.shape[2]):
@@ -33,8 +34,9 @@ def get_segmentation_mask(img_arr, organ, thresh):
                 # result_img_arr should have shape 64,64,64,1
                 if img_arr[x][y][z][0] > thresh:
                     result_img_arr[x, y, z] = organ_label
-
-    print("min: {}, max: {}".format(min_val, max_val))
+    #'''
+    #result_img_arr[img_arr > thresh] = organ_label
+    #print("min: {}, max: {}".format(min_val, max_val))
     return result_img_arr
 
 

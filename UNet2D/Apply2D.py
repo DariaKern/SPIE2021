@@ -18,6 +18,7 @@ def get_segmentation_mask2D(img_arr, organ, thresh):
     min_val =9999
     max_val= 0
 
+
     # loop over every voxel and create segmentation mask
     for x in range(img_arr.shape[0]):
         for y in range(img_arr.shape[1]):
@@ -29,7 +30,8 @@ def get_segmentation_mask2D(img_arr, organ, thresh):
                 if img_arr[x][y][0] > thresh:
                     result_img_arr[x, y] = organ_label
 
-    print("min: {}, max: {}".format(min_val, max_val))
+    #result_img_arr[img_arr>thresh] = organ_label
+    #print("min: {}, max: {}".format(min_val, max_val))
     return result_img_arr
 
 
@@ -57,7 +59,11 @@ def get_segmentation_masks2D(results, z_stack_length, path_ref_files, target_pat
             result_img_arr_stack3D.append(result_img_arr2D)
 
         #stack all 2D arrays to a 3D array
-        result_img_arr3D = np.dstack(result_img_arr_stack3D)
+        result_img_arr3D = np.stack(result_img_arr_stack3D,0) # sagittal
+
+        #sagittal_result_img_arr3D = result_img_arr3D.transpose((1,2,0))
+        #axial_result_img_arr3D = result_img_arr3D.transpose((1,0,2))
+        #coronal_result_img_arr3D = result_img_arr3D.transpose((0,1,2))
 
         result_img3D = sitk.GetImageFromArray(result_img_arr3D)
 
@@ -66,13 +72,13 @@ def get_segmentation_masks2D(results, z_stack_length, path_ref_files, target_pat
         sitk.WriteImage(result_img3D, '{}seg{}.nii.gz'.format(target_path, curr_key))
 
 
-def apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH):
+def apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH, direction):
     # create paths
     path_results, path_results_cropped, path_results_resampled, path_results_orig = create_paths(SAVE_PATH, "results")
     path_x_test_resampled = "{}Xtest/resampled/".format(SAVE_PATH)
 
     # get test data
-    x_test = get_organized_data_train2D(path_x_test_resampled, DIMENSIONS)
+    x_test = get_organized_data_train2D(path_x_test_resampled, DIMENSIONS, direction)
     # load and apply U-Net on test data and get results in format Width, Height, Depth, Channels
     model = load_model("{}{}U-Net2D.h5".format(SAVE_PATH, ORGAN))
     results = model.predict(x_test, verbose=1)

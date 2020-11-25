@@ -125,16 +125,16 @@ def crop_out_bb(orig_img, box_path):
     #TODO:
     # extreme cases
     if x_min < 0:
-        print(x_min)
+        #print(x_min)
         x_min = 0
     if y_min < 0:
-        print(y_min)
+        #print(y_min)
         y_min = 0
     if z_min < 0:
-        print(z_min)
+        #print(z_min)
         z_min = 0
-    print(box_path)
-    print(x_min,x_max,y_min,y_max,z_min, z_max)
+    #print(box_path)
+    #print(x_min,x_max,y_min,y_max,z_min, z_max)
     # cut out ROI with slicing operator
     result_img = orig_img[x_min:x_max, y_min:y_max, z_min:z_max]
 
