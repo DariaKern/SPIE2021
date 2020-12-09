@@ -8,7 +8,7 @@ from tensorflow.keras.utils import plot_model
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow_core.python.keras.callbacks import EarlyStopping, ModelCheckpoint
-from SharedMethods2D import get_organized_data_train2D
+from SharedMethods import get_organized_data_2D
 import shutil
 from UNet3D import Train
 
@@ -85,8 +85,8 @@ def train2D(SAVE_PATH, DIMENSIONS, ORGAN, direction, val_split=0.1, batch_size=1
     # get training data
     path_x_train_resampled = "{}Xtrain/resampled/".format(SAVE_PATH)
     path_y_train_resampled = "{}ytrain/resampled/".format(SAVE_PATH)
-    x_train = get_organized_data_train2D(path_x_train_resampled, DIMENSIONS, direction, False)
-    y_train = get_organized_data_train2D(path_y_train_resampled, DIMENSIONS, direction, True)
+    x_train = get_organized_data_2D(path_x_train_resampled, DIMENSIONS, direction, False)
+    y_train = get_organized_data_2D(path_y_train_resampled, DIMENSIONS, direction, True)
 
     # generate the 2D U-Net model (Width, Height, Channels)
     architecture = generate_U_Net2D(DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[3])

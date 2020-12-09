@@ -1,5 +1,4 @@
-from SharedMethods import create_paths, get_dict_of_paths, get_organ_label
-from SharedMethods2D import get_organized_data_train2D
+from SharedMethods import create_paths, get_dict_of_paths, get_organ_label, get_organized_data_2D
 from tensorflow.keras.models import load_model
 import numpy as np
 import SimpleITK as sitk
@@ -78,7 +77,7 @@ def apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH, direct
     path_x_test_resampled = "{}Xtest/resampled/".format(SAVE_PATH)
 
     # get test data
-    x_test = get_organized_data_train2D(path_x_test_resampled, DIMENSIONS, direction)
+    x_test = get_organized_data_2D(path_x_test_resampled, DIMENSIONS, direction)
     # load and apply U-Net on test data and get results in format Width, Height, Depth, Channels
     model = load_model("{}{}U-Net2D.h5".format(SAVE_PATH, ORGAN))
     results = model.predict(x_test, verbose=1)

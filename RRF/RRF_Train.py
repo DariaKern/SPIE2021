@@ -2,7 +2,7 @@ from sklearn.ensemble import RandomForestRegressor
 from timeit import default_timer as timer
 from sklearn.externals import joblib
 
-from mietzner_methods import nifti_loader, nifti_image_affine_reader, multi_bounding_box_organizer,\
+from RRF.mietzner_methods import nifti_loader, nifti_image_affine_reader, multi_bounding_box_organizer,\
     displacement_calc, training_subset_generator, loop_subset_training
 from SharedMethods import get_dict_of_paths
 

@@ -1,4 +1,7 @@
+'''
 
+
+'''
 import SimpleITK as sitk
 import os, re
 
@@ -48,6 +51,23 @@ def set_voxeltype(in_dir, out_dir):
 
 
 def change_segmentation_colorcode(organs, folder_path, target_folder_path):
+    '''
+    changes the color coding of the 5 target organs to 170(liver), 156(left kidney),
+    157(right kidney), 160(spleen) and 150(pancreas)
+
+    :param organs: list of 5 integer values
+    :param folder_path: path to folder containing images with wrong color coding
+    :param target_folder_path: path to target folder for result images
+
+    Usage::
+        in_path = "/path to files with wrong color coding"
+
+        out_path = "/target path"
+
+        organs = [6, 3, 2, 1, 11] # original color coding
+
+        change_segmentation_colorcode(organs, in_path, out_path)
+    '''
     switcher = {
         organs[0]: 170,     # liver
         organs[1]: 156,     # left kidney

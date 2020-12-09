@@ -53,7 +53,7 @@ VAL_SPLIT = 0.0
 BATCH = 8
 
 # define number of epochs (Default = 50)
-EPOCHS = 100
+EPOCHS = 50
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
 #CUSTOM_TEST_SET = [19]
@@ -74,10 +74,10 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
 direction= "axial"
 #organs = ['liver']
-run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction)
-#path = "/home/daria/Desktop/Data/Daria/EVAL/8/200 Epochs/3D/"
-#for organ in organs:
-    #summarize_eval(path, organ)
+#run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction)
+path = "/home/daria/Desktop/Data/Daria/EVAL/8/50 Epochs/2D axial/"
+for organ in organs:
+    summarize_eval(path, organ)
 #summarize_metrics(path, "dice")
 #summarize_metrics(path, "avd")
 #summarize_metrics(path, "hd")
@@ -126,3 +126,6 @@ out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step4 segmentat
 organs = [6, 3, 2, 1, 11]
 change_segmentation_colorcode(organs, in_path, out_path)
 '''
+
+
+#https://docs.python-guide.org/writing/documentation/

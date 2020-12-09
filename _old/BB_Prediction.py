@@ -1,12 +1,10 @@
-import numpy as np
 from timeit import default_timer as timer
-from sklearn import metrics
 import os
 import argparse
 import textwrap
 from sklearn.externals import joblib
 # -------------------methods-----------------------
-from mietzner_methods import nifti_loader, nifti_image_affine_reader,\
+from RRF.mietzner_methods import nifti_loader, nifti_image_affine_reader,\
     training_subset_generator, displacement_calc, \
     loop_offset_to_bb, loop_apply, bb_finalize, make_bounding_box
 

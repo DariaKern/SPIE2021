@@ -4,6 +4,7 @@ import SimpleITK as sitk
 import numpy as np
 from pathlib import Path
 import vtk
+import matplotlib.pyplot as plt
 '''_____________________________________________________________________________________________'''
 '''|.................................Helping Methods...........................................|'''
 '''_____________________________________________________________________________________________'''
@@ -158,3 +159,90 @@ def get_bb_coordinates(box_path):
     box = reader.GetOutput()
     x_min, x_max, y_min, y_max, z_min, z_max = box.GetBounds()
     return x_min, x_max, y_min, y_max, z_min, z_max
+
+
+def get_organized_data_2D(path, DIMENSIONS, direction, isSegmentation=False):
+    if isSegmentation:
+        a = "segmentation"
+    else:
+        a = "CT"
+    print("")
+    print("slice 2D {} data in {} direction".format(a, direction))
+    # organize file paths by patient number in dictionary
+    dict_file_paths = get_dict_of_paths(path)
+
+    # differentiate between images (X) and labels/Segmentations (y)
+    # assuming dimensions are x*x*x and not x*a*b
+    number_of_files = len(dict_file_paths)
+    if isSegmentation:
+        data = np.zeros((number_of_files*DIMENSIONS[2], DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[3]), dtype=np.bool)  # define y array
+    else:
+        data = np.zeros((number_of_files*DIMENSIONS[2], DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[3]), dtype=np.uint16)  # define X array
+
+
+
+    # load files and transform into arrays (Width, Height, Channels) and put in data (array of arrays)
+    index = 0
+    for key in sorted(dict_file_paths.keys()):
+        file_path = dict_file_paths[key]
+        img = sitk.ReadImage(file_path)
+        img_arr = sitk.GetArrayFromImage(img) # z, y, x ?????
+
+        switcher = {
+            "axial": 0,  # axial
+            "coronal": 1, # coronal
+            "sagittal": 2 # sagittal
+        }
+        axis = switcher.get(direction, 0)
+        shape = img_arr.shape[axis] + 1
+
+        # loop over entire 3D image stack and add every 2D slice to data
+        if direction == "coronal":
+            #img_arr = np.flip(img_arr, 0)
+
+            #TODO: schauen wie man es richtig dreht und spiegelt damit sie Segmentierung nachher nicht verdreht ist
+            img_arr = np.flip(img_arr, 2)
+            img_arr = np.flip(img_arr, 1)
+
+            #count = shape
+            for z in range(1, shape):
+                #curr_arr2D = img_arr[:, z - 1:z, :]  # coronal
+                curr_arr2D = img_arr[:, z-1:z, :]  # coronal
+                curr_arr2D = curr_arr2D.transpose(2, 0, 1)  # coronal
+
+
+                #print(index + (count-z-1))
+                data[index] = curr_arr2D
+                if index < 20:
+                    plt.imshow(curr_arr2D[:, :, 0])
+                    plt.show()
+                index = index + 1
+                #count = count - 1
+
+        elif direction == "axial":
+            for z in range(1, shape):
+                curr_arr2D = img_arr[z - 1:z, :, :]  # axial
+                curr_arr2D = curr_arr2D.transpose(1, 2, 0)  # axial
+                data[index] = curr_arr2D
+                #if index < 20:
+                    #plt.imshow(curr_arr2D[:, :, 0])
+                    #plt.show()
+                index = index + 1
+
+        elif direction == "sagittal":
+            for z in range(1, shape):
+                curr_arr2D = img_arr[:, :, z - 1:z]  # sagittal
+                data[index] = curr_arr2D
+                #if index < 20:
+                    #plt.imshow(curr_arr2D[:, :, 0])
+                    #plt.show()
+                index = index + 1
+
+
+    #img_arr = np.expand_dims(img_arr, axis=2)  # add a fourth dimension
+    #data[index] = np.expand_dims(curr_arr2D.squeeze(), -1)
+    #data = np.expand_dims(np.stack(data,0), -1)
+
+    print("Data Shape")
+    print(data.shape)
+    return data

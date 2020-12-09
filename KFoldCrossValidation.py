@@ -77,6 +77,7 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
             evaluate2D(SAVE_PATH, organ, number, elapsed_time)
 
 
+
 def summarize_eval(SAVE_PATH, ORGAN):
     # create excel sheet
     eval_wb = Workbook()
