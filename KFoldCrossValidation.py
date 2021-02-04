@@ -36,7 +36,7 @@ def get_files_in_path(path):
 
 
 def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction):
-    kfold = KFold(5, True, 1)
+    kfold = KFold(5, True, 9)
     data, amount_patients = get_files_in_path(SCAN_PATH)
     parts = kfold.split(data)
 
@@ -66,7 +66,7 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
 
             #apply(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh)
             #evaluate(SAVE_PATH, organ, number, elapsed_time)
-            #exit()
+
             # 2D
             start = time.time()
             train2D(SAVE_PATH, DIMENSIONS, organ, direction, 0.0, BATCH, EPOCHS)
@@ -75,6 +75,7 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
 
             apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh, direction)
             evaluate2D(SAVE_PATH, organ, number, elapsed_time)
+            exit()
 
 
 

@@ -50,6 +50,7 @@ def get_segmentation_masks(results, path_ref_files, target_path, organ, threshol
 
         # get the i-th reference file (patients in ascending order)
         curr_key = sorted(dict_ref_file_paths.keys())[i]
+        print(curr_key)
         curr_file_path = dict_ref_file_paths[curr_key]
 
         # check voxel values against treshold and get segmentationmask

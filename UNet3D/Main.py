@@ -4,6 +4,7 @@ from Train import train
 from Apply import apply
 from Evaluate import evaluate
 import time
+import DATA.normalize as D
 from KFoldCrossValidation import run_KfoldCV, summarize_eval, summarize_metrics
 from DATA.normalize import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
@@ -53,7 +54,7 @@ VAL_SPLIT = 0.0
 BATCH = 8
 
 # define number of epochs (Default = 50)
-EPOCHS = 50
+EPOCHS = 100
 
 #CUSTOM_TEST_SET = [7, 17, 15, 47, 22]
 #CUSTOM_TEST_SET = [19]
@@ -71,13 +72,15 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 '''_____________________________________________________________________________________________'''
 '''|................................METHODS....................................|'''
 '''_____________________________________________________________________________________________'''
-organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
+
+#organs = ['liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas']
 direction= "axial"
-#organs = ['liver']
-#run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction)
-path = "/home/daria/Desktop/Data/Daria/EVAL/8/50 Epochs/2D axial/"
-for organ in organs:
-    summarize_eval(path, organ)
+organs = ['pancreas']
+run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction)
+path = "/home/daria/Desktop/Data/Daria/DATA/eval/"
+
+#for organ in organs:
+    #summarize_eval(path, organ)
 #summarize_metrics(path, "dice")
 #summarize_metrics(path, "avd")
 #summarize_metrics(path, "hd")
