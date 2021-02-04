@@ -149,7 +149,7 @@ def change_segmentation_colorcode(organs, in_dir, out_dir):
 
         result_img_arr = orig_img_arr
         for colorcode in organs:
-            
+
             # change colors
             result_img_arr[orig_img_arr == colorcode] = switcher.get(colorcode)
             #result_img = sitk.Mask(orig_img, sitk.Equal(organ_label, orig_img))  # procedural API of SimpleITK
