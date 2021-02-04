@@ -22,12 +22,12 @@ RRF_BB_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/BB/"
 SAVE_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/"
 '''
 
-SCAN_PATH = "/Data/Daria/DATA/CT-SCANS/"
-GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
-GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
-RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"
-#RRF_BB_PATH = "/Data/Daria/DATA/BB/"
-SAVE_PATH = "/Data/Daria/DATA/"
+SCAN_PATH = "/Data/Daria/SPIE2021/CT-SCANS/"
+GT_SEG_PATH = "/Data/Daria/SPIE2021/GT-SEG/"
+GT_BB_PATH = "/Data/Daria/SPIE2021/GT-BB/"
+RRF_BB_PATH = "/Data/Daria/SPIE2021/GT-BB/"
+#RRF_BB_PATH = "/Data/Daria/SPIE2021/BB/"
+SAVE_PATH = "/Data/Daria/SPIE2021/"
 
 
 # organ to segment (NEEDED)
@@ -77,7 +77,7 @@ config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 direction= "axial"
 organs = ['pancreas']
 run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIMENSIONS, BATCH, EPOCHS, organs, direction)
-path = "/home/daria/Desktop/Data/Daria/DATA/eval/"
+path = "/home/daria/Desktop/Data/Daria/SPIE2021/eval/"
 
 #for organ in organs:
     #summarize_eval(path, organ)
