@@ -11,9 +11,19 @@ import matplotlib.pyplot as plt
 
 
 def find_patient_no_in_file_name(file_name):
-    # find patient number in file name
-    regex = re.compile(r'\d+')
-    patient_no = int(regex.search(file_name).group(0))
+    '''
+       finds the patient number (1 or more digits from 0-9) in a file name and returns it as integer
+
+       :param file_name: name of the file
+
+       Usage::
+           path = "/path to files"
+
+           for file in os.scandir(path):
+               find_patient_no_in_file_name(file.name)
+       '''
+    regex = re.compile(r'\d+') # 1 or more digits (0-9)
+    patient_no = int(regex.search(file_name).group(0)) #if not an integer 1 and 10 could cause problems
 
     return patient_no
 

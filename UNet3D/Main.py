@@ -4,9 +4,9 @@ from Train import train
 from Apply import apply
 from Evaluate import evaluate
 import time
-import DATA.normalize as D
+import DATA.prepare_data as D
 from KFoldCrossValidation import run_KfoldCV, summarize_eval, summarize_metrics
-from DATA.normalize import set_direction, set_origin, \
+from DATA.prepare_data import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
 '''_____________________________________________________________________________________________'''

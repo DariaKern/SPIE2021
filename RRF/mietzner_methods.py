@@ -43,7 +43,10 @@ def nifti_image_affine_reader(img):
 # returns coordinates
 def bounding_box_reader(bb, bb_counter):
     reader = vtk.vtkPolyDataReader()
-    reader.SetFileName(bb[bb_counter])
+    reader.SetFileName(bb)
+    print(bb)
+
+    #reader.SetFileName(bb[bb_counter])
     reader.Update()
     box = reader.GetOutput()
     x_min, x_max, y_min, y_max, z_min, z_max = box.GetBounds()
@@ -623,6 +626,52 @@ def training_subset_generator(data, spacing_x, spacing_y, spacing_z, offset_x, o
     return training_xyz_min, training_xyz_max
 
 
+def get_final_vectors(data,
+                      training_xyz_min, training_xyz_max,
+                      spacing_x, spacing_y, spacing_z,
+                      offset_x, offset_y, offset_z,
+                      bc_150,
+                      displacement_x, displacement_y, displacement_z,
+                      final_feature_vec,
+                      final_offset_vec_150):
+    # loop over voxels in this window
+    counter = 0
+    for training_z in range(training_xyz_min[2], training_xyz_max[2] + 1):
+        for training_y in range(training_xyz_min[1], training_xyz_max[1] + 1):
+            for training_x in range(training_xyz_min[0], training_xyz_max[0] + 1):
+                # create new variable for the current voxel
+                # transform voxel to mm
+                temp_train_coord = []
+                temp_train_coord.append(training_x)
+                temp_train_coord.append(training_y)
+                temp_train_coord.append(training_z)
+
+                temp_train_coord = vox_to_mm(temp_train_coord,
+                                             spacing_x, spacing_y, spacing_z,
+                                             offset_x, offset_y, offset_z)
+
+                # calculate offset between bounding box and voxel(mm) in mm
+                # v-bc = (vx, vx, vy, vy, vz, vz)
+                bb_offset_150 = bb_offset_calc(temp_train_coord, bc_150)
+
+                # create mean feature boxes
+                temp_feature_vec = feature_box_generator(data,
+                                                         training_x, training_y, training_z,
+                                                         displacement_x, displacement_y, displacement_z)
+
+                '''if(np.any(np.isnan(temp_feature_vec))):
+                    print("!!!!!!!!!")
+                    print(temp_feature_vec)
+                    print("!!!!!!!!!")
+                    exit()
+                    '''
+                # add feature vector of current voxel to the complete feature vector
+                final_feature_vec.append(temp_feature_vec)
+                final_offset_vec_150.append(bb_offset_150)
+
+    return final_feature_vec, final_offset_vec_150
+
+
 def loop_subset_training(data, training_xyz_min, training_xyz_max,
                          spacing_x, spacing_y, spacing_z,
                          offset_x, offset_y, offset_z,
@@ -716,6 +765,45 @@ def bb_offset_calc(temp_train_coord, bc):
     bb_offset.append(temp_train_coord[2] - bc[5])
     return bb_offset
 
+
+def dummy(y_pred_150, training_xyz_min, training_xyz_max, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z):
+    # Counter iterates over the predicted offsets
+    pred_Counter = 0
+
+    # init lists for coordinates
+    # bc_150
+    bc_150_x_min_test = []
+    bc_150_x_max_test = []
+    bc_150_y_min_test = []
+    bc_150_y_max_test = []
+    bc_150_z_min_test = []
+    bc_150_z_max_test = []
+
+    # loop over voxels in this window
+    for training_z in range(training_xyz_min[2], training_xyz_max[2] + 1):
+        for training_y in range(training_xyz_min[1], training_xyz_max[1] + 1):
+            for training_x in range(training_xyz_min[0], training_xyz_max[0] + 1):
+                # create new variable for the current voxel
+                # transform voxel to mm
+                temp_train_coord = []
+                temp_train_coord.append(training_x)
+                temp_train_coord.append(training_y)
+                temp_train_coord.append(training_z)
+
+                temp_train_coord = vox_to_mm(temp_train_coord, spacing_x, spacing_y, spacing_z, offset_x, offset_y,
+                                             offset_z)
+
+                # set y_pred as offset
+                # 150
+                bc_150_x_min_test.append(temp_train_coord[0] - y_pred_150[pred_Counter][0])
+                bc_150_x_max_test.append(temp_train_coord[0] - y_pred_150[pred_Counter][1])
+                bc_150_y_min_test.append(temp_train_coord[1] - y_pred_150[pred_Counter][2])
+                bc_150_y_max_test.append(temp_train_coord[1] - y_pred_150[pred_Counter][3])
+                bc_150_z_min_test.append(temp_train_coord[2] - y_pred_150[pred_Counter][4])
+                bc_150_z_max_test.append(temp_train_coord[2] - y_pred_150[pred_Counter][5])
+
+                pred_Counter += 1
+    return bc_150_x_min_test, bc_150_x_max_test, bc_150_y_min_test, bc_150_y_max_test, bc_150_z_min_test, bc_150_z_max_test
 #-------------------------------------------------------------------------------------------------------------------------------------------
 # offset to Bounding Box loop
 # calculates the coordinates of the predicted bb in mm for each of its walls
@@ -893,9 +981,9 @@ def bb_finalize(x_min_test, x_max_test, y_min_test, y_max_test, z_min_test, z_ma
 
 #-----------------------------------------------------------------------------------------------------------------------
 def make_bounding_box(new_bb, file, save_path):
-    patient_number = find_patient_no_in_file_name(file)
+    patient_number = find_patient_no_in_file_name(file.name)
     bb_name = "{}{}_{}_bb.vtk".format(save_path, patient_number, new_bb[6])
-
+    print(patient_number)
     x_min = new_bb[0]
     x_max = new_bb[1]
     y_min = new_bb[2]

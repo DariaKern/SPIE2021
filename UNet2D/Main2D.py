@@ -4,7 +4,7 @@ from Train2D import train2D
 from Apply2D import apply2D
 from Evaluate2D import evaluate2D, summarize_eval2D
 import time
-from DATA.normalize import set_direction, set_origin, \
+from DATA.prepare_data import set_direction, set_origin, \
     set_voxeltype, set_spacing, check_all, change_segmentation_colorcode
 
 '''_____________________________________________________________________________________________'''
