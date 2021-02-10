@@ -1,10 +1,10 @@
 from sklearn.ensemble import RandomForestRegressor
 from timeit import default_timer as timer
 from sklearn.externals import joblib
-from RRF.mietzner_methods import nifti_loader, nifti_image_affine_reader,\
-    displacement_calc, training_subset_generator,\
-    bounding_box_reader, get_final_vectors
-from SharedMethods import get_dict_of_paths
+from RRF.mietzner_methods import nifti_image_affine_reader,\
+    displacement_calc, training_subset_generator, get_final_vectors
+import SharedMethods as sm
+import nibabel as nib
 
 
 def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
@@ -28,29 +28,25 @@ def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
     start = timer()
     # feature vector for one data-point: v(p) = (v1,..., vd)
     # voxel: p = (px, py, pz)
-
-    #files = []
-    #bb = []
     final_offset_vec = []
     final_feature_vec = []
 
-    scan_paths_dict = get_dict_of_paths(ct_scan_path)
-    bb_paths_dict_150 = get_dict_of_paths(gt_bb_path, organ)
+    scan_paths_dict = sm.get_dict_of_paths(ct_scan_path)
+    bb_paths_dict_150 = sm.get_dict_of_paths(gt_bb_path, organ)
 
-    bb_counter = 0
     for key in sorted(scan_paths_dict.keys()):
-        #files.append(scan_paths_dict[key])
-        #bb.append(bb_paths_dict_150[key])
         file = scan_paths_dict[key]
         bounding_box = bb_paths_dict_150[key]
 
-
-
-    #for file in files:
         print(file)
+        print(bounding_box)
+
         #TODO: replace with SITK
         # load Nifti format image and save image in numpy array
-        img, data = nifti_loader(file)
+        # load Nifti format
+        img = nib.load(file)
+        # save image in numpy array
+        data = img.get_fdata()
 
         # get image affine from header
         spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z = nifti_image_affine_reader(img)
@@ -58,27 +54,14 @@ def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
         # read bounding box for every organ
         # Bounding Box 6 vector bc=(bL, bR, bA, bP, bH, bF), position of BB walls
 
-        bb_xmin, bb_ymin, bb_zmin, bb_xmax, bb_ymax, bb_zmax = bounding_box_reader(bounding_box, bb_counter)
-        bb_coordinates = []
-        bb_coordinates.append(bb_xmin)
-        bb_coordinates.append(bb_xmax)
-        bb_coordinates.append(bb_ymin)
-        bb_coordinates.append(bb_ymax)
-        bb_coordinates.append(bb_zmin)
-        bb_coordinates.append(bb_zmax)
+        bb_coordinates = sm.get_bb_coordinates(bounding_box)
+        print(bb_coordinates)
 
         # the training subset is defined as the middle of the image and a box radius around it
         # the method finds this box and calculates the starting and end point for the loop
         training_xyz_min, training_xyz_max = training_subset_generator(data,
                                                                        spacing_x, spacing_y, spacing_z,
                                                                        offset_x, offset_y, offset_z)
-
-        training_xyz_min[0] = int(training_xyz_min[0])
-        training_xyz_min[1] = int(training_xyz_min[1])
-        training_xyz_min[2] = int(training_xyz_min[2])
-        training_xyz_max[0] = int(training_xyz_max[0])
-        training_xyz_max[1] = int(training_xyz_max[1])
-        training_xyz_max[2] = int(training_xyz_max[2])
 
         # a negative spacing would switch the max and min coordinates (xmin->xmax, xmax->xmin)
         # if spacing is negative min and max will be switched to match the correct values
@@ -91,12 +74,6 @@ def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
             temp_spac_y = training_xyz_min[1]
             training_xyz_min[1] = training_xyz_max[1]
             training_xyz_max[1] = temp_spac_y
-
-        # init array for the image and its feature vectors
-        image_feature_vec = []
-
-        # init array for image offset vector
-        image_offset_vec = []
 
         # calculate displacement of feature boxes
         # due to different spacing, the feature boxes cant be created using voxels as measurement
@@ -120,8 +97,6 @@ def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
             bb_coordinates,
             displacement_x, displacement_y, displacement_z, final_feature_vec,
             final_offset_vec)
-
-        bb_counter += 1
 
     print("Elapsed time: ", (timer() - start) / 60)
 

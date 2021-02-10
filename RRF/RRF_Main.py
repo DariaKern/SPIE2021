@@ -11,5 +11,5 @@ in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step4 segmentati
 out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/GT-BB/"
 #create_gt_bb(in_path, out_path)
 
-train_RRF(SCAN_PATH, GT_BB_PATH, SAVE_PATH, "liver") # about 15minutes
-#apply_RRF(SCAN_PATH, SAVE_PATH, BB_PATH, "liver")
+#train_RRF(SCAN_PATH, GT_BB_PATH, SAVE_PATH, "liver") # about 15minutes
+apply_RRF(SCAN_PATH, SAVE_PATH, BB_PATH, "liver")
