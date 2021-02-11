@@ -1,30 +1,35 @@
 from sklearn.ensemble import RandomForestRegressor
 from timeit import default_timer as timer
-from sklearn.externals import joblib
-from RRF.mietzner_methods import nifti_image_affine_reader,\
-    displacement_calc, training_subset_generator, get_final_vectors
+#from sklearn.externals import joblib
+import joblib
+from RRF.mietzner_methods import nifti_image_affine_reader, get_final_vectors, \
+    training_subset_generator_old, displacement_calc_old
 import SharedMethods as sm
 import nibabel as nib
 
-
 def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
     '''
-    trains a organ specific Random Regression Forest
+        trains a organ specific Random Regression Forest
 
-           :param ct_scan_path: path to directory containing the CT scans
-           :param gt_bb_path: path to directory containing the ground truth bounding boxes
-           :param rrf_path: path to target directory where the RRF models will be saved
-           :param organ: organ for which a RRF will be trained.
-           Valid organ names are 'liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas'
+               :param ct_scan_path: path to directory containing the CT scans
+               :param gt_bb_path: path to directory containing the ground truth bounding boxes
+               :param rrf_path: path to target directory where the RRF models will be saved
+               :param organ: organ for which a RRF will be trained.
+               Valid organ names are 'liver', 'left_kidney', 'right_kidney', 'spleen', 'pancreas'
 
-           Usage::
-               ct_scan_path = "/path to CT scans"
-               gt_bb_path = "/path to gt bb"
-               rrf_path = "/target path"
-               organ = "liver"
+               Usage::
+                   ct_scan_path = "/path to CT scans"
+                   gt_bb_path = "/path to gt bb"
+                   rrf_path = "/target path"
+                   organ = "liver"
 
-               train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ)
-           '''
+                   train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ)
+               '''
+    start = timer()
+
+
+
+def train_RRF_old(ct_scan_path, gt_bb_path, rrf_path, organ):
     start = timer()
     # feature vector for one data-point: v(p) = (v1,..., vd)
     # voxel: p = (px, py, pz)
@@ -59,7 +64,7 @@ def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
 
         # the training subset is defined as the middle of the image and a box radius around it
         # the method finds this box and calculates the starting and end point for the loop
-        training_xyz_min, training_xyz_max = training_subset_generator(data,
+        training_xyz_min, training_xyz_max = training_subset_generator_old(data,
                                                                        spacing_x, spacing_y, spacing_z,
                                                                        offset_x, offset_y, offset_z)
 
@@ -80,7 +85,7 @@ def train_RRF(ct_scan_path, gt_bb_path, rrf_path, organ):
         # displacement has to be calculated in mm-space, to achieve the same result in different images
         # a sample from the image is the starting point for the calculations
 
-        displacement_x, displacement_y, displacement_z = displacement_calc(training_xyz_min,
+        displacement_x, displacement_y, displacement_z = displacement_calc_old(training_xyz_min,
                                                                            spacing_x, spacing_y, spacing_z,
                                                                            offset_x, offset_y, offset_z)
         displacement_x = int(displacement_x)

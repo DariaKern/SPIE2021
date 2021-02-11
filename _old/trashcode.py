@@ -383,3 +383,60 @@ for file in files:
 
 print('done')
 '''
+
+'''
+
+# -------------------------------------------------------------------------------------------
+# the training subset is located in the middle of the image
+# the axial center of the image has to be found
+# an area around this center has to be allocated
+# returns min, max for x, y
+# @autojit()
+def training_subset_generator_old(data, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z):
+    rows = data.shape[0]
+    columns = data.shape[1]
+    z_axis = data.shape[2]
+    axial_center = [columns / 2, rows / 2, z_axis / 2]
+    print('axial center: ', axial_center)
+
+    # calculate voxel to mm coordinates
+    axial_center_mm = vox_to_mm(axial_center, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
+    print('axial center in mm: ', axial_center_mm)
+
+    # calculate voxel training subset, +-100mm
+    training_xyz_min = []
+    training_xyz_max = []
+
+    training_xyz_min.append(axial_center_mm[0] - 15)
+    training_xyz_min.append(axial_center_mm[1] - 15)
+    training_xyz_min.append(axial_center_mm[2] - 15)
+
+    training_xyz_max.append(axial_center_mm[0] + 15)
+    training_xyz_max.append(axial_center_mm[1] + 15)
+    training_xyz_max.append(axial_center_mm[2] + 15)
+    print('training xyz max min mm: ', training_xyz_max, training_xyz_min)
+
+    # calculate coordinates of voxel training subset
+    training_xyz_min = mm_to_vox(training_xyz_min,
+                                 spacing_x, spacing_y, spacing_z,
+                                 offset_x, offset_y, offset_z)
+
+    training_xyz_max = mm_to_vox(training_xyz_max,
+                                 spacing_x, spacing_y, spacing_z,
+                                 offset_x, offset_y, offset_z)
+
+    # round coordinates
+    training_xyz_min[0] = int(training_xyz_min[0])
+    training_xyz_min[1] = int(training_xyz_min[1])
+    training_xyz_min[2] = int(training_xyz_min[2])
+    # print('Trainingxyzmin (rounded): ', training_xyz_min)
+
+    training_xyz_max[0] = int(training_xyz_max[0])
+    training_xyz_max[1] = int(training_xyz_max[1])
+    training_xyz_max[2] = int(training_xyz_max[2])
+    # print('Trainingxyzmax (rounded): ', training_xyz_max)
+    print('training xyz max min: ', training_xyz_max, training_xyz_min)
+
+    return training_xyz_min, training_xyz_max
+
+'''

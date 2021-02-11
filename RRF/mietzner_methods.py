@@ -26,17 +26,18 @@ def nifti_image_affine_reader(img):
 
 # -------------------------------------------------------------------------------
 
+
 # calculate displacement of feature boxes
 # due to different spacing, the feature boxes cant be created using voxels as measurement
 # displacement has to be calculated in mm-space, to achieve the same result in different images
 # a sample from the image is the starting point for the calculations
-def displacement_calc(training_xyz_min, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z):
-    displacement_samp = []
-    displacement_samp.append(training_xyz_min[0])
-    displacement_samp.append(training_xyz_min[1])
-    displacement_samp.append(training_xyz_min[2])
+def displacement_calc_old(training_xyz_min, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z):
+    trainxyz = []
+    trainxyz.append(training_xyz_min[0])
+    trainxyz.append(training_xyz_min[1])
+    trainxyz.append(training_xyz_min[2])
 
-    displacement_samp_mm = vox_to_mm(displacement_samp,
+    displacement_samp_mm = vox_to_mm(trainxyz,
                                      spacing_x, spacing_y, spacing_z,
                                      offset_x, offset_y, offset_z)
 
@@ -44,28 +45,32 @@ def displacement_calc(training_xyz_min, spacing_x, spacing_y, spacing_z, offset_
     displacement_samp_mm[1] = displacement_samp_mm[1] + 25
     displacement_samp_mm[2] = displacement_samp_mm[2] + 25
 
-    displacement_samp_mm = mm_to_vox(displacement_samp_mm,
+    displacement = mm_to_vox(displacement_samp_mm,
                                      spacing_x, spacing_y, spacing_z,
                                      offset_x, offset_y, offset_z)
 
-    displacement_samp_mm[0] = int(displacement_samp_mm[0])
-    displacement_samp_mm[1] = int(displacement_samp_mm[1])
-    displacement_samp_mm[2] = int(displacement_samp_mm[2])
+    displacement[0] = int(displacement[0])
+    displacement[1] = int(displacement[1])
+    displacement[2] = int(displacement[2])
 
-    displacement_x = displacement_samp[0] - displacement_samp_mm[0]
-    displacement_y = displacement_samp[1] - displacement_samp_mm[1]
-    displacement_z = displacement_samp[2] - displacement_samp_mm[2]
+    x = trainxyz[0] - displacement[0]
+    y = trainxyz[1] - displacement[1]
+    z = trainxyz[2] - displacement[2]
 
-    displacement_x = abs(displacement_x)
-    displacement_y = abs(displacement_y)
-    displacement_z = abs(displacement_z)
+    displacement_x = abs(x)
+    displacement_y = abs(y)
+    displacement_z = abs(z)
 
     return displacement_x, displacement_y, displacement_z
 
 
 # ----------------------------------------------------------------------------------
 
-def feature_box_generator(data, training_x, training_y, training_z, displacement_x, displacement_y, displacement_z):
+def feature_box_generator_old(data, training_x, training_y, training_z, displacement_x, displacement_y, displacement_z):
+    #print(data.shape)
+    #print(training_x, training_y, training_z)
+    #print(displacement_x, displacement_y, displacement_z)
+
     # create feature boxes in each direction
     iterator_disp_x = displacement_x // 2
     iterator_disp_y = displacement_y // 2
@@ -491,80 +496,6 @@ def feature_box_generator(data, training_x, training_y, training_z, displacement
     return temp_feature_vec
 
 
-def training_subset_generator(img_arr, spacing, origin):
-    '''
-        blablab returns the axial center of a 3D image in format x, y, z
-        TODO
-
-       :param img_arr: numpy array (z, y, x)
-       :param spacing: (x, y, z)
-       :param origin: offset from 0, 0, 0 (x, y, z)
-
-       Usage::
-           TODO
-    '''
-    rows = img_arr.shape[1]  # y
-    columns = img_arr.shape[2]  # x
-    z_axis = img_arr.shape[0]  # z
-    axial_center = [columns / 2, rows / 2, z_axis / 2]
-
-    print(img_arr.shape)
-    print('axial center1: ', axial_center)
-
-    return 1, 1
-
-
-# -------------------------------------------------------------------------------------------
-# the training subset is located in the middle of the image
-# the axial center of the image has to be found
-# an area around this center has to be allocated
-# returns min, max for x, y
-# @autojit()
-def training_subset_generator_old(data, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z):
-    rows = data.shape[0]
-    columns = data.shape[1]
-    z_axis = data.shape[2]
-    axial_center = [columns / 2, rows / 2, z_axis / 2]
-    print('axial center: ', axial_center)
-
-    # calculate voxel to mm coordinates
-    axial_center_mm = vox_to_mm(axial_center, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
-    print('axial center in mm: ', axial_center_mm)
-
-    # calculate voxel training subset, +-100mm
-    training_xyz_min = []
-    training_xyz_max = []
-
-    training_xyz_min.append(axial_center_mm[0] - 15)
-    training_xyz_min.append(axial_center_mm[1] - 15)
-    training_xyz_min.append(axial_center_mm[2] - 15)
-
-    training_xyz_max.append(axial_center_mm[0] + 15)
-    training_xyz_max.append(axial_center_mm[1] + 15)
-    training_xyz_max.append(axial_center_mm[2] + 15)
-
-    # calculate coordinates of voxel training subset
-    training_xyz_min = mm_to_vox(training_xyz_min,
-                                 spacing_x, spacing_y, spacing_z,
-                                 offset_x, offset_y, offset_z)
-
-    training_xyz_max = mm_to_vox(training_xyz_max,
-                                 spacing_x, spacing_y, spacing_z,
-                                 offset_x, offset_y, offset_z)
-
-    # round coordinates
-    training_xyz_min[0] = int(training_xyz_min[0])
-    training_xyz_min[1] = int(training_xyz_min[1])
-    training_xyz_min[2] = int(training_xyz_min[2])
-    print('Trainingxyzmin (rounded): ', training_xyz_min)
-
-    training_xyz_max[0] = int(training_xyz_max[0])
-    training_xyz_max[1] = int(training_xyz_max[1])
-    training_xyz_max[2] = int(training_xyz_max[2])
-    print('Trainingxyzmax (rounded): ', training_xyz_max)
-    return training_xyz_min, training_xyz_max
-
-
 def get_final_vectors(data,
                       training_xyz_min, training_xyz_max,
                       spacing_x, spacing_y, spacing_z,
@@ -745,11 +676,11 @@ def dummy(y_pred, training_xyz_min, training_xyz_max, spacing_x, spacing_y, spac
 
 
 # -----------------------------------------------------------------------------------------------------------------------
-# loop used to apply the trained models on new img_arr
-# variant of loop_subset_training
 
-def loop_apply(data, training_xyz_min, training_xyz_max, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z,
+def loop_apply_old(data, training_xyz_min, training_xyz_max, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z,
                displacement_x, displacement_y, displacement_z, final_feature_vec):
+
+    print(displacement_x, displacement_y, displacement_z)
     # loop over voxels in this window
     counter = 0
     for training_z in range(training_xyz_min[2], training_xyz_max[2] + 1):
@@ -766,7 +697,7 @@ def loop_apply(data, training_xyz_min, training_xyz_max, spacing_x, spacing_y, s
                                              offset_z)
                 # print("TRAINING_Y!!! {}, {}, {}".format(training_y, training_z, training_x))
                 # create mean feature boxes
-                temp_feature_vec = feature_box_generator(data, training_x, training_y, training_z, displacement_x,
+                temp_feature_vec = feature_box_generator_old(data, training_x, training_y, training_z, displacement_x,
                                                          displacement_y, displacement_z)
                 # print(temp_feature_vec)
 
@@ -777,61 +708,57 @@ def loop_apply(data, training_xyz_min, training_xyz_max, spacing_x, spacing_y, s
 
 
 # -------------------------------------------------------------------------
-def bb_finalize(x_min_test, x_max_test, y_min_test, y_max_test, z_min_test, z_max_test):
-    x_min_test = np.around(x_min_test)
-    x_max_test = np.around(x_max_test)
-    y_min_test = np.around(y_min_test)
-    y_max_test = np.around(y_max_test)
-    z_min_test = np.around(z_min_test)
-    z_max_test = np.around(z_max_test)
-    # find the top 3 predicted coords for each wall
-    c_x_min = collections.Counter(x_min_test).most_common(3)
-    c_x_max = collections.Counter(x_max_test).most_common(3)
-    c_y_min = collections.Counter(y_min_test).most_common(3)
-    c_y_max = collections.Counter(y_max_test).most_common(3)
-    c_z_min = collections.Counter(z_min_test).most_common(3)
-    c_z_max = collections.Counter(z_max_test).most_common(3)
 
-    new_bb = []
-    # this version creates a bigger bb by selecting extreme values
-    new_bb.append(np.min([c_x_min[0][0], c_x_min[1][0], c_x_min[2][0]]))
-    new_bb.append(np.max([c_x_max[0][0], c_x_max[1][0], c_x_max[2][0]]))
-    new_bb.append(np.min([c_y_min[0][0], c_y_min[1][0], c_y_min[2][0]]))
-    new_bb.append(np.max([c_y_max[0][0], c_y_max[1][0], c_y_max[2][0]]))
-    new_bb.append(np.min([c_z_min[0][0], c_z_min[1][0], c_z_min[2][0]]))
-    new_bb.append(np.max([c_z_max[0][0], c_z_max[1][0], c_z_max[2][0]]))
-
-    # uncomment for majority vote
-    # new_bb.append(c_x_min[0][0])
-    # new_bb.append(c_x_max[0][0])
-    # new_bb.append(c_y_min[0][0])
-    # new_bb.append(c_y_max[0][0])
-    # new_bb.append(c_z_min[0][0])
-    # new_bb.append(c_z_max[0][0])
-    return new_bb
 
 
 # -----------------------------------------------------------------------------------------------------------------------
-def make_bounding_box(new_bb, file, save_path):
-    patient_number = sm.find_patient_no_in_file_name(file.name)
-    bb_name = "{}{}_{}_bb.vtk".format(save_path, patient_number, new_bb[6])
-    print(patient_number)
-    x_min = new_bb[0]
-    x_max = new_bb[1]
-    y_min = new_bb[2]
-    y_max = new_bb[3]
-    z_min = new_bb[4]
-    z_max = new_bb[5]
 
-    bounds = [x_min, x_max, y_min, y_max, z_min, z_max]
-    # define bb as cube
-    vtk_cube = vtk.vtkCubeSource()
-    vtk_cube.SetBounds(bounds)
-    vtk_cube.Update()
-    output = vtk_cube.GetOutput()
 
-    # save bounding box object to file
-    writer = vtk.vtkPolyDataWriter()
-    writer.SetInputData(output)
-    writer.SetFileName(bb_name)
-    writer.Update()
+
+def training_subset_generator_old(data, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z):
+    rows = data.shape[0]
+    columns = data.shape[1]
+    z_axis = data.shape[2]
+    axial_center = [columns / 2, rows / 2, z_axis / 2]
+    #print('axial center: ', axial_center)
+
+    # calculate voxel to mm coordinates
+    axial_center_mm = vox_to_mm(axial_center, spacing_x, spacing_y, spacing_z, offset_x, offset_y, offset_z)
+    #print('axial center in mm: ', axial_center_mm)
+
+    # calculate voxel training subset, +-100mm
+    training_xyz_min = []
+    training_xyz_max = []
+
+    training_xyz_min.append(axial_center_mm[0] - 15)
+    training_xyz_min.append(axial_center_mm[1] - 15)
+    training_xyz_min.append(axial_center_mm[2] - 15)
+
+    training_xyz_max.append(axial_center_mm[0] + 15)
+    training_xyz_max.append(axial_center_mm[1] + 15)
+    training_xyz_max.append(axial_center_mm[2] + 15)
+    #print('training xyz max min mm: ', training_xyz_max, training_xyz_min)
+
+    # calculate coordinates of voxel training subset
+    training_xyz_min = mm_to_vox(training_xyz_min,
+                                 spacing_x, spacing_y, spacing_z,
+                                 offset_x, offset_y, offset_z)
+
+    training_xyz_max = mm_to_vox(training_xyz_max,
+                                 spacing_x, spacing_y, spacing_z,
+                                 offset_x, offset_y, offset_z)
+
+    # round coordinates
+    training_xyz_min[0] = int(training_xyz_min[0])
+    training_xyz_min[1] = int(training_xyz_min[1])
+    training_xyz_min[2] = int(training_xyz_min[2])
+    # print('Trainingxyzmin (rounded): ', training_xyz_min)
+
+    training_xyz_max[0] = int(training_xyz_max[0])
+    training_xyz_max[1] = int(training_xyz_max[1])
+    training_xyz_max[2] = int(training_xyz_max[2])
+    # print('Trainingxyzmax (rounded): ', training_xyz_max)
+    #print('training xyz max min: ', training_xyz_max, training_xyz_min)
+
+    return training_xyz_min, training_xyz_max
+
