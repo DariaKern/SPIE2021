@@ -254,9 +254,6 @@ def get_organized_data_2D(path, DIMENSIONS, direction, isSegmentation=False):
     # img_arr = np.expand_dims(img_arr, axis=2)  # add a fourth dimension
     # img_arr[index] = np.expand_dims(curr_arr2D.squeeze(), -1)
     # img_arr = np.expand_dims(np.stack(img_arr,0), -1)
-
-    print("Data Shape")
-    print(data.shape)
     return data
 
 
@@ -300,11 +297,11 @@ def training_subset_generator(img, p_img_arr):
     # print('training xyz max min mm: ', training_xyz_max_mm, training_xyz_min_mm)
 
     # transform physical space (mm) to index
-    training_xyz_min = img.TransformPhysicalPointToIndex(training_xyz_min_mm)
-    training_xyz_max = img.TransformPhysicalPointToIndex(training_xyz_max_mm)
+    training_xyz_min = img.TransformPhysicalPointToContinuousIndex(training_xyz_min_mm)
+    training_xyz_max = img.TransformPhysicalPointToContinuousIndex(training_xyz_max_mm)
 
-    t_min = [training_xyz_min[0], training_xyz_min[1], training_xyz_min[2]]
-    t_max = [training_xyz_max[0], training_xyz_max[1], training_xyz_max[2]]
+    t_min = [int(training_xyz_min[0]), int(training_xyz_min[1]), int(training_xyz_min[2])]
+    t_max = [int(training_xyz_max[0]), int(training_xyz_max[1]), int(training_xyz_max[2])]
 
     return t_min, t_max
 
@@ -344,6 +341,7 @@ def calc_bb_coordinates(img, p_redictions, p_training_xyz_min, p_training_xyz_ma
                 pred_Counter += 1
     return all_x_min, all_x_max, all_y_min, all_y_max, all_z_min, all_z_max
 
+
 # loop used to apply the trained models on new img_arr
 # variant of loop_subset_training
 def loop_apply(p_img_arr, training_xyz_min, training_xyz_max, p_displacement):
@@ -377,15 +375,16 @@ def displacement_calc(img, p_training_xyz_min):
     displacement_mm[2] = training_xyz_min_mm[2] + 25
 
     # transform physical space (mm) to index
-    displacement = img.TransformPhysicalPointToIndex(displacement_mm)
+    displacement = img.TransformPhysicalPointToContinuousIndex(displacement_mm)
 
     xyz = [0, 0, 0]
-    xyz[0] = abs(training_xyz_min[0] - displacement[0])
-    xyz[1] = abs(training_xyz_min[1] - displacement[1])
-    xyz[2] = abs(training_xyz_min[2] - displacement[2])
-    print('dari trainxyz {} - displacement {} = {}'.format(training_xyz_min, displacement, xyz))
+    xyz[0] = abs(training_xyz_min[0] - int(displacement[0]))
+    xyz[1] = abs(training_xyz_min[1] - int(displacement[1]))
+    xyz[2] = abs(training_xyz_min[2] - int(displacement[2]))
+    #print('dari trainxyz {} - displacement {} = {}'.format(training_xyz_min, displacement, xyz))
 
     return xyz
+
 
 def bb_finalize(x_min_test, x_max_test, y_min_test, y_max_test, z_min_test, z_max_test):
     x_min_test = np.around(x_min_test)
@@ -447,13 +446,47 @@ def make_bounding_box(new_bb, file, save_path):
     writer.Update()
 
 
+def get_final_vectors(img, img_arr, training_xyz_min, training_xyz_max, bb_coordinates, displacement,
+                      final_feature_vec, final_offset_vec):
+    # loop over voxels in this window
+    for training_z in range(training_xyz_min[2], training_xyz_max[2] + 1):
+        for training_y in range(training_xyz_min[1], training_xyz_max[1] + 1):
+            for training_x in range(training_xyz_min[0], training_xyz_max[0] + 1):
+                # create new variable for the current voxel
+                temp_train_coord = []
+                temp_train_coord.append(training_x)
+                temp_train_coord.append(training_y)
+                temp_train_coord.append(training_z)
+                #print(temp_train_coord)
+
+                # transform index to physical space (mm)
+                temp_train_coord_mm = img.TransformIndexToPhysicalPoint(temp_train_coord)
+                #print(temp_train_coord_mm)
+                # calculate offset between bounding box and voxel(mm) in mm
+                # v-bc = (vx, vx, vy, vy, vz, vz)
+                bb_offset = []
+                bb_offset.append(temp_train_coord_mm[0] - bb_coordinates[0])
+                bb_offset.append(temp_train_coord_mm[0] - bb_coordinates[1])
+                bb_offset.append(temp_train_coord_mm[1] - bb_coordinates[2])
+                bb_offset.append(temp_train_coord_mm[1] - bb_coordinates[3])
+                bb_offset.append(temp_train_coord_mm[2] - bb_coordinates[4])
+                bb_offset.append(temp_train_coord_mm[2] - bb_coordinates[5])
+
+                # create mean feature boxes
+                temp_feature_vec = feature_box_generator(img_arr, training_x, training_y, training_z, displacement)
+
+                # add feature vector of current voxel to the complete feature vector
+                final_feature_vec.append(temp_feature_vec)
+                final_offset_vec.append(bb_offset)
+
+    return final_feature_vec, final_offset_vec
+
+
 def feature_box_generator(p_img_arr, train_x, train_y, train_z, p_displacement):
     displacement = p_displacement.copy()
     img_arr = p_img_arr.copy()
 
-    #print(img_arr.shape)
-    #print(train_x, train_y, train_z)
-    #print("calc displacement ", displacement)
+
 
     # create feature boxes in each direction
     iterator_disp_x = displacement[0] // 2
@@ -481,6 +514,14 @@ def feature_box_generator(p_img_arr, train_x, train_y, train_z, p_displacement):
             displacement[0] = displacement[0] + iterator_disp_x
             displacement[1] = displacement[1] + iterator_disp_y
             displacement[2] = displacement[2] + iterator_disp_z
+        '''
+        print(" ")
+        print("img arr shape", img_arr.shape)
+        print("img arr x y z ", img_arr.shape[2], img_arr.shape[1], img_arr.shape[0])
+        print("train x,y,z", train_x, train_y, train_z)
+        print("calc displacement ", displacement)
+        '''
+
 
         train_y = int(train_y)
         train_z = int(train_z)
@@ -850,6 +891,39 @@ def feature_box_generator(p_img_arr, train_x, train_y, train_z, p_displacement):
         if (z1 < 0): z1 = 0
         if (z2 >= img_arr.shape[0]): z2 = img_arr.shape[0] - 1
         feature_box_26 = img_arr[z1:z2, y1:y2, x1:x2]
+
+        '''
+        print("0",feature_box_0.shape)
+        print(feature_box_1.shape)
+        print(feature_box_2.shape)
+        print(feature_box_3.shape)
+        print(feature_box_4.shape)
+        print("5",feature_box_5.shape)
+        print(feature_box_6.shape)
+        print(feature_box_7.shape)
+        print(feature_box_8.shape)
+        print(feature_box_9.shape)
+        print("10",feature_box_10.shape)
+        print(feature_box_11.shape)
+        print(feature_box_12.shape)
+        print(feature_box_13.shape)
+        print(feature_box_14.shape)
+        print("15",feature_box_15.shape)
+        print(feature_box_16.shape)
+        print(feature_box_17.shape)
+        print(feature_box_18.shape)
+        print(feature_box_19.shape)
+        print("20",feature_box_20.shape)
+        print(feature_box_21.shape)
+        print(feature_box_22.shape)
+        print(feature_box_23.shape)
+        print(feature_box_24.shape)
+        print("25",feature_box_25.shape)
+        print(feature_box_26.shape)
+        
+        
+        '''
+
 
         temp_feature_vec.append(np.mean(feature_box_1))
         temp_feature_vec.append(np.mean(feature_box_2))

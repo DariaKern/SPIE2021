@@ -83,9 +83,9 @@ def generate_U_Net(IMG_WIDTH, IMG_HEIGHT, IMG_DEPTH, IMG_CHANNELS):
 def plot_history(history):
     # Plot history as image: Binary crossentropy & Accuracy
     plt.plot(history.history['loss'], label='binary crossentropy (training data)')
-    #plt.plot(history.history['val_loss'], label='binary crossentropy (validation data)')
+    plt.plot(history.history['val_loss'], label='binary crossentropy (validation data)')
     plt.plot(history.history['accuracy'], label='Accuracy (training data)')
-    #plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
+    plt.plot(history.history['val_accuracy'], label='Accuracy (validation data)')
     plt.title('Model performance')
     plt.ylabel('Loss value')
     plt.xlabel('No. epoch')
@@ -93,7 +93,7 @@ def plot_history(history):
     plt.show()
 
 
-def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50):
+def train_3DUNet(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=8, epochs=100):
     # get training data
     path_x_train_resampled = "{}Xtrain/resampled/".format(SAVE_PATH)
     path_y_train_resampled = "{}ytrain/resampled/".format(SAVE_PATH)
@@ -108,23 +108,23 @@ def train(SAVE_PATH, DIMENSIONS, ORGAN, val_split=0.1, batch_size=15, epochs=50)
     #cb_tensorboard = tf.keras.callbacks.TensorBoard(
         #log_dir="./logs",
         #update_freq=1) # Note that writing too frequently to TensorBoard can slow down your training.
-    #cb_earlystopper = EarlyStopping(patience=10, verbose=1)
-    #cb_checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
+    cb_earlystopper = EarlyStopping(patience=10, verbose=1)
+    cb_checkpointer = ModelCheckpoint('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN), verbose=1, save_best_only=True)
 
     # train the model
     history = architecture.fit(x_train, y_train,
-                        #validation_split=val_split,
+                        validation_split=val_split,
                         batch_size=batch_size,
                         epochs=epochs,
-                        #callbacks=[cb_earlystopper, cb_checkpointer, cb_tensorboard]
+                        callbacks=[cb_earlystopper, cb_checkpointer]#, cb_tensorboard]
                         )
 
     # generate image with model architecture and show training history
     #plot_model(architecture, to_file='{}U-Net.png'.format(SAVE_PATH), show_shapes=True)
-    #plot_history(history)
+    plot_history(history)
 
     #INFO: save U-Net non needed for early stopping already saves the best model
-    architecture.save('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN))
+    #architecture.save('{}{}U-Net.h5'.format(SAVE_PATH, ORGAN))
 
     '''
     Use TensorBoard

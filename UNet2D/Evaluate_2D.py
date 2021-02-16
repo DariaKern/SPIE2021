@@ -1,4 +1,4 @@
-from UNet3D.Evaluate import evaluate_predictions, evaluate
+from UNet3D.Evaluate_3D import evaluate_predictions, evaluate
 from openpyxl import load_workbook
 
 

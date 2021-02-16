@@ -184,10 +184,23 @@ def resample_files(path, target_path, target_depth, target_height, target_width)
     print("done. saved resampled files to '{}'".format(target_path))
 
 
-def create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN):
+def create_set(path):
+    # take all ct scans if no test split was given
+    all_patient_numbers = set()
+    for file in os.scandir(path):
+        patient_no = find_patient_no_in_file_name(file.name)
+        all_patient_numbers.add(patient_no)
+    return all_patient_numbers
+
+
+def create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split=None, ORGAN="liver"):
     print("")
     print("CREATING X TRAIN")
     path_x_train, path_x_train_cropped, path_x_train_resampled, path_x_train_orig = create_paths(SAVE_PATH, "Xtrain")
+
+    # take all ct scans if no train split was given
+    if train_split is None:
+        train_split = create_set(SCAN_PATH)
     copy_files_to_folder(SCAN_PATH, path_x_train_orig, train_split)
 
     # crop GT BBs out of SCANs
@@ -197,10 +210,14 @@ def create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, OR
     resample_files(path_x_train_cropped, path_x_train_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
-def create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, ORGAN):
+def create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split=None, ORGAN="liver"):
     print("")
     print("CREATING Y TRAIN")
     path_y_train, path_y_train_cropped, path_y_train_resampled, path_y_train_orig = create_paths(SAVE_PATH, "ytrain")
+
+    # take all segmentations if no train split was given
+    if train_split is None:
+        train_split = create_set(GT_SEG_PATH)
     copy_files_to_folder(GT_SEG_PATH, path_y_train_orig, train_split)
 
     # crop GT BBs out of GT SEGs
@@ -210,10 +227,14 @@ def create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, DIMENSIONS, train_split, 
     resample_files(path_y_train_cropped, path_y_train_resampled, DIMENSIONS[0], DIMENSIONS[1], DIMENSIONS[2])
 
 
-def create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split, ORGAN):
+def create_x_test(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, test_split=None, ORGAN="liver"):
     print("")
     print("CREATING X TEST")
     path_x_test, path_x_test_cropped, path_x_test_resampled, path_x_test_orig = create_paths(SAVE_PATH, "Xtest")
+
+    # take all ct scans if no test split was given
+    if test_split is None:
+        test_split = create_set(SCAN_PATH)
     copy_files_to_folder(SCAN_PATH, path_x_test_orig, test_split)
 
     # crop RRF BBs out of SCANs

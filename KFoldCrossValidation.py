@@ -3,14 +3,14 @@ from sklearn.model_selection import KFold
 from SharedMethods import find_patient_no_in_file_name
 import os
 import tensorflow as tf
-from UNet3D.Prepare import prepare
-from UNet3D.Train import train
-from UNet3D.Apply import apply
-from UNet3D.Evaluate import evaluate
-from UNet2D.Prepare2D import create_excel_sheet2D
-from UNet2D.Train2D import train2D
-from UNet2D.Apply2D import apply2D
-from UNet2D.Evaluate2D import evaluate2D
+from UNet3D.Prepare_3D import prepare
+from UNet3D.Train_3D import train_3DUNet
+from UNet3D.Apply_3D import apply_3DUnet
+from UNet3D.Evaluate_3D import evaluate
+from UNet2D.Prepare_2D import create_excel_sheet2D
+from UNet2D.Train_2D import train_2DUNet
+from UNet2D.Apply_2D import apply_2DUNet
+from UNet2D.Evaluate_2D import evaluate2D
 import time
 
 from openpyxl import load_workbook
@@ -69,11 +69,11 @@ def run_KfoldCV(SCAN_PATH, GT_BB_PATH, RRF_BB_PATH, GT_SEG_PATH, SAVE_PATH, DIME
 
             # 2D
             start = time.time()
-            train2D(SAVE_PATH, DIMENSIONS, organ, direction, 0.0, BATCH, EPOCHS)
+            train_2DUNet(SAVE_PATH, DIMENSIONS, organ, direction, 0.0, BATCH, EPOCHS)
             end = time.time()
             elapsed_time = end - start
 
-            apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh, direction)
+            apply_2DUNet(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, organ, thresh, direction)
             evaluate2D(SAVE_PATH, organ, number, elapsed_time)
             exit()
 

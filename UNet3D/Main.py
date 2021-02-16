@@ -132,3 +132,9 @@ change_segmentation_colorcode(organs, in_path, out_path)
 
 
 #https://docs.python-guide.org/writing/documentation/
+'''
+for organ in ['left_kidney', 'right_kidney', 'spleen', 'pancreas']:
+    create_x_train(SCAN_PATH, GT_BB_PATH, SAVE_PATH, [96,96,96], None, organ)
+    create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, [96,96,96], None, organ)
+    train_3DUNet(SAVE_PATH, [96,96,96,1], organ )
+'''

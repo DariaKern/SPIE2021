@@ -1,11 +1,19 @@
 '''
 Preprocessing
 '''
-
+import shutil
 import SimpleITK as sitk
 import SharedMethods as sm
 import os
 import vtk
+from pathlib import Path
+
+
+def rename_files(in_dir, out_dir):
+    counter = 0
+    for file in os.scandir(in_dir):
+        shutil.copy(file.path, "{}{}".format(out_dir, "{}.nii.gz".format(counter)))
+        counter += 1
 
 
 def create_gt_bb(seg_path, bb_path):
@@ -265,4 +273,42 @@ def check_all(path):
         '''
     for file in os.scandir(path):
         check(file)
+
+
+def copy_files_to_folder(in_dir, out_dir):
+    # delete all files in output directory
+    shutil.rmtree(out_dir, ignore_errors=True)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+
+    # move files
+    for file in os.scandir(in_dir):
+        shutil.copy(file.path, "{}{}".format(out_dir, file.name))
+
+    # delete all files in input directory
+    shutil.rmtree(in_dir, ignore_errors=True)
+    Path(in_dir).mkdir(parents=True, exist_ok=True)
+
+
+def prepare_data(in_dir, out_dir, temp_dir):
+    # delete all files in output directory
+    shutil.rmtree(out_dir, ignore_errors=True)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+
+    rename_files(in_dir, out_dir)
+    print("renamed files: ")
+    check_all(out_dir)
+
+    set_voxeltype(out_dir, temp_dir)
+    copy_files_to_folder(temp_dir, out_dir)
+
+    set_origin(out_dir, temp_dir)
+    copy_files_to_folder(temp_dir, out_dir)
+
+    set_direction(out_dir, temp_dir)
+    copy_files_to_folder(temp_dir, out_dir)
+
+    set_spacing(out_dir, temp_dir)
+    copy_files_to_folder(temp_dir, out_dir)
+    print("prepared files: ")
+    check_all(out_dir)
 

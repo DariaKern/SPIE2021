@@ -2,7 +2,7 @@ from SharedMethods import create_paths, get_dict_of_paths, get_organ_label, get_
 from tensorflow.keras.models import load_model
 import numpy as np
 import SimpleITK as sitk
-from UNet3D.Apply import resample_files_reverse, crop_files_reverse
+from UNet3D.Apply_3D import resample_files_reverse, crop_files_reverse
 
 # check voxel values against threshold and get segmentationmask
 def get_segmentation_mask2D(img_arr, organ, thresh):
@@ -71,7 +71,7 @@ def get_segmentation_masks2D(results, z_stack_length, path_ref_files, target_pat
         sitk.WriteImage(result_img3D, '{}seg{}.nii.gz'.format(target_path, curr_key))
 
 
-def apply2D(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH, direction):
+def apply_2DUNet(SCAN_PATH, RRF_BB_PATH, SAVE_PATH, DIMENSIONS, ORGAN, THRESH, direction):
     # create paths
     path_results, path_results_cropped, path_results_resampled, path_results_orig = create_paths(SAVE_PATH, "results")
     path_x_test_resampled = "{}Xtest/resampled/".format(SAVE_PATH)

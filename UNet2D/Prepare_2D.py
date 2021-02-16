@@ -1,4 +1,4 @@
-from UNet3D.Prepare import split_train_and_test, create_x_train, create_y_train, create_x_test, create_y_test, create_excel_sheet
+from UNet3D.Prepare_3D import split_train_and_test, create_x_train, create_y_train, create_x_test, create_y_test, create_excel_sheet
 from openpyxl.styles import Alignment, NamedStyle, Font
 from openpyxl import Workbook
 
