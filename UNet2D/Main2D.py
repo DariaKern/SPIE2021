@@ -1,3 +1,4 @@
+#TODO delete prob
 import tensorflow as tf
 from Prepare2D import prepare2D, split_train_and_test2D
 from Train2D import train2D
@@ -16,7 +17,7 @@ SCAN_PATH = "/Data/Daria/DATA/CT-SCANS/"
 GT_SEG_PATH = "/Data/Daria/DATA/GT-SEG/"
 GT_BB_PATH = "/Data/Daria/DATA/GT-BB/"
 RRF_BB_PATH = "/Data/Daria/DATA/GT-BB/"
-#RRF_BB_PATH = "/Data/Daria/DATA/BB/"
+#RRF_BB_PATH = "/Data/Daria/PREP/BB/"
 SAVE_PATH = "/Data/Daria/DATA/"
 
 

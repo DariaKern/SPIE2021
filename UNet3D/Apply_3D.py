@@ -68,7 +68,7 @@ def resample_files_reverse(path, target_path, bb_folder_path, ORGAN, ref_files_f
     if ref_files_folder_path is None:
         #TODO
         ref_files_folder_path = "/home/daria/Desktop/Data/Daria/Workflow/WF/Xtest/cropped/"
-        #ref_files_folder_path = "/home/daria/Desktop/Data/Daria/DATA/Xtest/cropped/"
+        #ref_files_folder_path = "/home/daria/Desktop/Data/Daria/PREP/Xtest/cropped/"
     ref_files_path_dict = get_dict_of_paths(ref_files_folder_path)
 
     print("")

@@ -1,5 +1,6 @@
+#TODO write workflow into KFoldCrossValidation
 import tensorflow as tf
-from Prepare import prepare, split_train_and_test
+from Prepare_3D import prepare, split_train_and_test
 from Train import train
 from Apply import apply
 from Evaluate import evaluate
@@ -12,15 +13,6 @@ from DATA.prepare_data import set_direction, set_origin, \
 '''_____________________________________________________________________________________________'''
 '''|................................DEFINE NEEDED VARIABLES....................................|'''
 '''_____________________________________________________________________________________________'''
-
-# Darias local standard paths (NEEDED)
-'''
-SCAN_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/CT-SCANS/"
-GT_SEG_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/GT-SEG"
-GT_BB_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/GT-BB/"
-RRF_BB_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/BB/"
-SAVE_PATH = "/home/daria/Desktop/Data/Daria/Data old (Mietzner stuff)/"
-'''
 
 SCAN_PATH = "/Data/Daria/SPIE2021/CT-SCANS/"
 GT_SEG_PATH = "/Data/Daria/SPIE2021/GT-SEG/"
@@ -112,20 +104,9 @@ def run_x_times(times):
 #run_x_times(10)
 
 
-#set_direction(in_dir1, out_dir)
-#set_origin(in_dir, out_dir)
-#set_voxeltype(in_dir, out_dir)
-#set_spacing(in_dir, out_dir)
-#check_all(out_dir)
-
-#from RRF.RRF_Prepare import create_gt_bb_alternative
-#in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/GT-SEG/"
-#out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/GT-BB/"
-#create_gt_bb_alternative(in_path, out_path)
-
 '''
-in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step3 voxel type, spacing/GT-SEG/"
-out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED DATA/Data2/step4 segmentation color/"
+in_path = "/home/daria/Desktop/Data/Daria/NORMALIZED PREP/Data2/step3 voxel type, spacing/GT-SEG/"
+out_path = "/home/daria/Desktop/Data/Daria/NORMALIZED PREP/Data2/step4 segmentation color/"
 organs = [6, 3, 2, 1, 11]
 change_segmentation_colorcode(organs, in_path, out_path)
 '''
