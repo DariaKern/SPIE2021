@@ -119,3 +119,28 @@ for organ in ['left_kidney', 'right_kidney', 'spleen', 'pancreas']:
     create_y_train(GT_SEG_PATH, GT_BB_PATH, SAVE_PATH, [96,96,96], None, organ)
     train_3DUNet(SAVE_PATH, [96,96,96,1], organ )
 '''
+
+'''
+def get_full_bounds(img_path,bb_path):
+    orig_img = sitk.ReadImage(img_path)
+    width_mm= orig_img.GetWidth()*2 - 10
+    height_mm = orig_img.GetHeight()*2 -10
+    depth_mm = orig_img.GetDepth()*2 -10
+
+
+    bounds = [ -width_mm, -100, -height_mm,10,10, depth_mm]
+
+    # define bb as cube
+    vtk_cube = vtk.vtkCubeSource()
+    vtk_cube.SetBounds(bounds)
+    vtk_cube.Update()
+    output = vtk_cube.GetOutput()
+
+    # save bounding box object to file
+    bb_name = "{}_{}_bb.vtk".format(0, 160)
+    save_path = "{}{}".format(bb_path, bb_name)
+    writer = vtk.vtkPolyDataWriter()
+    writer.SetInputData(output)
+    writer.SetFileName(save_path)
+    writer.Update()
+'''

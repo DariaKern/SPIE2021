@@ -16,7 +16,7 @@ def rename_files(in_dir, out_dir):
         counter += 1
 
 
-def create_gt_bb(seg_path, bb_path):
+def create_gt_bb(seg_path, bb_path, organ):
     '''
     creates ground truth bounding boxes from segmentation files. Organ color coding must be 170(liver), 156(left kidney),
     157(right kidney), 160(spleen) and 150(pancreas). The segmentation names must be similar to "seg1.nii.gz".
@@ -42,62 +42,55 @@ def create_gt_bb(seg_path, bb_path):
         orig_img = sitk.ReadImage("{}{}".format(seg_path, file.name))
 
         # for organ in [6, 3, 2, 1, 11]: # unused alternative for different color coding
-        for organ in [150, 156, 157, 160, 170]:
-            # get start index and size of organ
-            lsi_filter = sitk.LabelShapeStatisticsImageFilter()
-            lsi_filter.SetComputeOrientedBoundingBox(True)
-            lsi_filter.Execute(orig_img)
-            bb = lsi_filter.GetBoundingBox(organ)  # x1, y1, z1, w, h, d
+        organ_label = sm.get_organ_label(organ)
 
-            # other stuff
-            bb_orig = lsi_filter.GetOrientedBoundingBoxOrigin(organ)
-            bb_dir = lsi_filter.GetOrientedBoundingBoxDirection(organ)
-            bb_vertices = lsi_filter.GetOrientedBoundingBoxVertices(organ)
-            bb_size = lsi_filter.GetOrientedBoundingBoxSize(organ)
+        # get start index and size of organ
+        lsi_filter = sitk.LabelShapeStatisticsImageFilter()
+        lsi_filter.SetComputeOrientedBoundingBox(True)
+        lsi_filter.Execute(orig_img)
+        bb = lsi_filter.GetBoundingBox(organ_label)  # x1, y1, z1, w, h, d
 
-            # define for index slicing
-            x_min = bb[0] - 1
-            x_max = bb[0] + bb[3]
-            y_min = bb[1] - 1
-            y_max = bb[1] + bb[4]
-            z_min = bb[2] - 1
-            z_max = bb[2] + bb[5]
+        # other stuff
+        bb_orig = lsi_filter.GetOrientedBoundingBoxOrigin(organ_label)
+        bb_dir = lsi_filter.GetOrientedBoundingBoxDirection(organ_label)
+        bb_vertices = lsi_filter.GetOrientedBoundingBoxVertices(organ_label)
+        bb_size = lsi_filter.GetOrientedBoundingBoxSize(organ_label)
 
-            # transform points to physical space
-            p_min = orig_img.TransformIndexToPhysicalPoint((x_min, y_min, z_min))
-            p_max = orig_img.TransformIndexToPhysicalPoint((x_max, y_max, z_max))
+        # define for index slicing
+        x_min = bb[0] - 1
+        x_max = bb[0] + bb[3]
+        y_min = bb[1] - 1
+        y_max = bb[1] + bb[4]
+        z_min = bb[2] - 1
+        z_max = bb[2] + bb[5]
 
-            '''
+        # transform points to physical space
+        p_min = orig_img.TransformIndexToPhysicalPoint((x_min, y_min, z_min))
+        p_max = orig_img.TransformIndexToPhysicalPoint((x_max, y_max, z_max))
+
+        '''
             NOTE: Nifti changes direction  ( 1,0,0   to    (-1,  0,  0
                                              0,1,0,          0, -1,  0      
                                              0,0,1 )         0,  0,  1
 
             that's why x and y have to be inverted when saving it to a VTK file
-            '''
-            bounds = [-p_max[0], -p_min[0], -p_max[1], -p_min[1], p_min[2], p_max[2]]
+        '''
+        bounds = [-p_max[0], -p_min[0], -p_max[1], -p_min[1], p_min[2], p_max[2]]
 
-            # define bb as cube
-            vtk_cube = vtk.vtkCubeSource()
-            vtk_cube.SetBounds(bounds)
-            vtk_cube.Update()
-            output = vtk_cube.GetOutput()
+        # define bb as cube
+        vtk_cube = vtk.vtkCubeSource()
+        vtk_cube.SetBounds(bounds)
+        vtk_cube.Update()
+        output = vtk_cube.GetOutput()
 
-            # switcher = { # unused alternative for different color coding
-            #    6: 170,
-            #    3: 156,
-            #    2: 157,
-            #    1: 160,
-            #    10: 150
-            # }
-            # bb_name = "{}_{}_bb.vtk".format(patient, switcher.get(organ))
 
-            # save bounding box object to file
-            bb_name = "{}_{}_bb.vtk".format(patient, organ)
-            save_path = "{}{}".format(bb_path, bb_name)
-            writer = vtk.vtkPolyDataWriter()
-            writer.SetInputData(output)
-            writer.SetFileName(save_path)
-            writer.Update()
+        # save bounding box object to file
+        bb_name = "{}_{}_bb.vtk".format(patient, organ_label)
+        save_path = "{}{}".format(bb_path, bb_name)
+        writer = vtk.vtkPolyDataWriter()
+        writer.SetInputData(output)
+        writer.SetFileName(save_path)
+        writer.Update()
 
     print("count {}".format(count))
     print("done. saved Ground Truth Bounding Boxes to '{}'".format(bb_path))
@@ -294,8 +287,8 @@ def prepare_data(in_dir, out_dir, temp_dir):
     shutil.rmtree(out_dir, ignore_errors=True)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
 
-    rename_files(in_dir, out_dir)
-    print("renamed files: ")
+    set_voxeltype(in_dir, out_dir)
+    #print("renamed files: ")
     check_all(out_dir)
 
     set_voxeltype(out_dir, temp_dir)
@@ -307,8 +300,8 @@ def prepare_data(in_dir, out_dir, temp_dir):
     set_direction(out_dir, temp_dir)
     copy_files_to_folder(temp_dir, out_dir)
 
-    set_spacing(out_dir, temp_dir)
-    copy_files_to_folder(temp_dir, out_dir)
+    #set_spacing(out_dir, temp_dir)
+    #copy_files_to_folder(temp_dir, out_dir)
     print("prepared files: ")
     check_all(out_dir)
 

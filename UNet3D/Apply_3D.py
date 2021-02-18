@@ -51,14 +51,19 @@ def get_segmentation_masks(results, path_ref_files, target_path, organ, threshol
         # get the i-th reference file (patients in ascending order)
         curr_key = sorted(dict_ref_file_paths.keys())[i]
         print(curr_key)
-        curr_file_path = dict_ref_file_paths[curr_key]
+        ref_file_path = dict_ref_file_paths[curr_key]
+        ref_file = sitk.ReadImage(ref_file_path)
 
         # check voxel values against treshold and get segmentationmask
         result_img_arr = get_segmentation_mask(result, organ, threshold)
         result_img = sitk.GetImageFromArray(result_img_arr)
 
         # save cropped array as nifti file with patient number in name
+        #TODO: set original spacing (currently spacing of 2,2,2 expected)
+        spacing = ref_file.GetSpacing()
+        print(spacing)
         result_img.SetSpacing((2.0, 2.0, 2.0))
+        result_img.SetSpacing(spacing)
         sitk.WriteImage(result_img, '{}seg{}.nii.gz'.format(target_path, curr_key))
 
 
@@ -145,7 +150,11 @@ def crop_files_reverse(path, target_path, bb_folder_path, ref_files_folder_path,
 
         # save nifti file with patient number in name
         result_img = sitk.GetImageFromArray(result_img_arr)
+        #TODO
+        spacing = ref_img.GetSpacing()
+        print(spacing)
         result_img.SetSpacing((2,2,2))
+        result_img.SetSpacing(spacing)
         result_img = sitk.Cast(result_img, sitk.sitkUInt16)
         sitk.WriteImage(result_img, "{}{}".format(target_path, file.name))
 
